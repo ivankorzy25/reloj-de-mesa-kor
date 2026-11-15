@@ -1,6 +1,5 @@
 package com.realfamousbae.standby.dock.cards
 
-import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -25,11 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.realfamousbae.standby.dock.standby.ClockStyle
 import kotlinx.coroutines.delay
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private data class PowerState(val percent: Int, val charging: Boolean, val nextAlarmMs: Long?)
 
@@ -55,7 +49,7 @@ fun AlarmBatteryCard(style: ClockStyle) {
             }
             Column {
                 CardText("Próxima alarma", style)
-                CardText(alarmText(state.nextAlarmMs), style, size = 24.sp, strong = true)
+                CardText(Alarms.shortText(state.nextAlarmMs), style, size = 24.sp, strong = true)
             }
         }
     }
@@ -83,25 +77,11 @@ private fun read(context: Context): PowerState {
     val level = battery?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
     val scale = battery?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
     val status = battery?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-    val alarm = context.getSystemService(AlarmManager::class.java)?.nextAlarmClock?.triggerTime
+    val alarm = Alarms.next(context)
     return PowerState(
         percent = if (level >= 0 && scale > 0) level * 100 / scale else 0,
         charging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
             status == BatteryManager.BATTERY_STATUS_FULL,
         nextAlarmMs = alarm,
     )
-}
-
-private fun alarmText(triggerMs: Long?): String {
-    triggerMs ?: return "No hay ninguna puesta"
-    val zone = ZoneId.systemDefault()
-    val time = Instant.ofEpochMilli(triggerMs).atZone(zone)
-    val today = LocalDate.now(zone)
-    val day = when (time.toLocalDate()) {
-        today -> "Hoy"
-        today.plusDays(1) -> "Mañana"
-        else -> time.format(DateTimeFormatter.ofPattern("EEE d", Locale.forLanguageTag("es-AR")))
-            .replaceFirstChar { it.titlecase(Locale.forLanguageTag("es-AR")) }
-    }
-    return "$day ${time.format(DateTimeFormatter.ofPattern("HH:mm"))}"
 }

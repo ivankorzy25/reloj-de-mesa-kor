@@ -36,8 +36,10 @@ data class StandbySettings(
 
     // --- Cara del reloj (se pasa con el dedo, se recuerda la última) ---
     val clockFace: ClockFace = ClockFace.Digital,
-    /** Tarjeta de la derecha que quedó elegida. */
+    /** Tarjeta de la derecha (o de la primera columna) que quedó elegida. */
     val sideCard: SideCard = SideCard.Clima,
+    /** Tarjeta de la segunda columna del layout "Dos columnas". */
+    val sideCard2: SideCard = SideCard.AlarmaBateria,
 
     // --- Personalización del reloj ---
     val clockColor: Long = ClockColors.GRIS,

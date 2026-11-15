@@ -93,6 +93,7 @@ fun StandbyScreen(
     onOpenNotification: (BannerNotification) -> Unit,
     onFaceChange: (ClockFace) -> Unit,
     onCardChange: (SideCard) -> Unit,
+    onCard2Change: (SideCard) -> Unit,
     onExit: () -> Unit,
 ) {
     // Las tarjetas (clima, agenda, alarma, música) están siempre: la segunda columna ya no
@@ -129,7 +130,43 @@ fun StandbyScreen(
                         nowPlaying = nowPlaying,
                         widgetAvailable = widgetId != null,
                         widget = { if (widgetId != null) key(widgetId) { WidgetView(widgetHost, widgetId, style) } },
+                        selected = settings.sideCard,
                         onCardChange = onCardChange,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+            // Vista "Widgets" del StandBy del iPhone: dos columnas de tarjetas apiladas, cada
+            // una con su propio dedo. El reloj es una tarjeta más (la de arriba de la lista).
+            ScreenLayout.Widgets -> Row(
+                Modifier.fillMaxSize().padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                Card(Modifier.weight(1f).exitOnTap { }, style) {
+                    SideCardHost(
+                        settings = settings,
+                        style = style,
+                        weather = weather,
+                        nowPlaying = nowPlaying,
+                        // El widget del sistema va en la primera columna: una sola vista de
+                        // widget por pantalla (el host de Android no admite dos iguales).
+                        widgetAvailable = widgetId != null,
+                        widget = { if (widgetId != null) key(widgetId) { WidgetView(widgetHost, widgetId, style) } },
+                        selected = settings.sideCard,
+                        onCardChange = onCardChange,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                Card(Modifier.weight(1f).exitOnTap { }, style) {
+                    SideCardHost(
+                        settings = settings,
+                        style = style,
+                        weather = weather,
+                        nowPlaying = nowPlaying,
+                        widgetAvailable = false,
+                        widget = {},
+                        selected = settings.sideCard2,
+                        onCardChange = onCard2Change,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

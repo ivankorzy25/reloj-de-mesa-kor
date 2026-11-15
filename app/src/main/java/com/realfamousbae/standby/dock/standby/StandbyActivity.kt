@@ -99,6 +99,11 @@ class StandbyActivity : ComponentActivity() {
                         lifecycleScope.launch { graph.settingsRepository.setSideCard(card) }
                     }
                 },
+                onCard2Change = { card ->
+                    if (card != graph.settings.value.sideCard2) {
+                        lifecycleScope.launch { graph.settingsRepository.setSideCard2(card) }
+                    }
+                },
                 onExit = { finish() },
             )
         }

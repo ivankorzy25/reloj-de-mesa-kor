@@ -55,21 +55,31 @@ fun CardsSection(onPickWidget: (AppWidgetProviderInfo) -> Unit) {
 
     SectionTitle("Pantalla del modo")
     ChipRow(
-        options = listOf(ScreenLayout.ClockOnly, ScreenLayout.ClockAndWidget),
+        options = ScreenLayout.entries,
         selected = settings.layout,
-        label = { if (it == ScreenLayout.ClockOnly) "Solo reloj" else "Reloj + tarjeta" },
+        label = { it.label },
     ) { layout -> scope.launch { repository.setLayout(layout) } }
 
-    if (settings.layout == ScreenLayout.ClockAndWidget) {
+    if (settings.layout != ScreenLayout.ClockOnly) {
         Text(
             "En el modo, las tarjetas se pasan con el dedo de arriba a abajo.",
             style = MaterialTheme.typography.bodySmall,
         )
+        if (settings.layout == ScreenLayout.Widgets) Text("Primera columna")
         ChipRow(
             options = SideCard.available(widgetAvailable = widget != null),
             selected = settings.sideCard,
             label = { it.label },
         ) { card -> scope.launch { repository.setSideCard(card) } }
+    }
+    if (settings.layout == ScreenLayout.Widgets) {
+        Text("Segunda columna")
+        ChipRow(
+            // El widget del sistema solo se puede dibujar una vez: va en la primera columna.
+            options = SideCard.available(widgetAvailable = false),
+            selected = settings.sideCard2,
+            label = { it.label },
+        ) { card -> scope.launch { repository.setSideCard2(card) } }
     }
 
     // --- Clima ---

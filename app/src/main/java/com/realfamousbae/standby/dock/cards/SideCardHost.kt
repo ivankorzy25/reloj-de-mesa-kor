@@ -15,8 +15,11 @@ import com.realfamousbae.standby.dock.standby.ClockStyle
 import com.realfamousbae.standby.dock.weather.WeatherRepository
 
 /**
- * Las tarjetas de la derecha, una arriba de la otra: se pasan con el dedo (vertical) y la
- * última queda guardada.
+ * Una columna de tarjetas, una arriba de la otra: se pasan con el dedo (vertical) y la
+ * última queda guardada. La misma pieza sirve para la tarjeta de al lado del reloj y para
+ * cada una de las dos columnas del layout "Dos columnas" (cada columna con su propio dedo).
+ *
+ * @param selected la tarjeta elegida de esta columna (cada columna guarda la suya).
  */
 @Composable
 fun SideCardHost(
@@ -26,12 +29,13 @@ fun SideCardHost(
     nowPlaying: NowPlayingSource,
     widgetAvailable: Boolean,
     widget: @Composable () -> Unit,
+    selected: SideCard,
     onCardChange: (SideCard) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cards = SideCard.available(widgetAvailable)
     val pager = rememberPagerState(
-        initialPage = SideCard.pageOf(settings.sideCard, widgetAvailable),
+        initialPage = SideCard.pageOf(selected, widgetAvailable),
     ) { cards.size }
 
     LaunchedEffect(pager, cards.size) {
@@ -39,17 +43,19 @@ fun SideCardHost(
             cards.getOrNull(page)?.let(onCardChange)
         }
     }
-    LaunchedEffect(settings.sideCard, cards.size) {
-        val target = SideCard.pageOf(settings.sideCard, widgetAvailable)
+    LaunchedEffect(selected, cards.size) {
+        val target = SideCard.pageOf(selected, widgetAvailable)
         if (!pager.isScrollInProgress && pager.currentPage != target) pager.scrollToPage(target)
     }
 
     VerticalPager(state = pager, modifier = modifier) { page ->
         Box(Modifier.fillMaxSize()) {
             when (cards.getOrElse(page) { SideCard.Clima }) {
+                SideCard.Reloj -> ClockCard(style)
                 SideCard.Clima -> WeatherCard(settings, style, weather)
                 SideCard.Calendario -> CalendarCard(style)
                 SideCard.AlarmaBateria -> AlarmBatteryCard(style)
+                SideCard.AlarmaGrande -> BigAlarmCard(style)
                 SideCard.Musica -> NowPlayingCard(style, nowPlaying)
                 SideCard.Widget -> widget()
             }

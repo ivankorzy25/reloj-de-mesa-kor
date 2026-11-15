@@ -49,6 +49,7 @@ class SettingsRepository(context: Context) {
                 hideSystemHeadsUp = p[HIDE_SYSTEM_HEADS_UP] ?: defaults.hideSystemHeadsUp,
                 clockFace = ClockFace.parse(p[CLOCK_FACE]),
                 sideCard = SideCard.parse(p[SIDE_CARD]),
+                sideCard2 = SideCard.parseSecond(p[SIDE_CARD_2]),
                 clockColor = p[CLOCK_COLOR] ?: defaults.clockColor,
                 clockFont = ClockFont.parse(p[CLOCK_FONT]),
                 clockSizePercent = p[CLOCK_SIZE] ?: defaults.clockSizePercent,
@@ -90,6 +91,7 @@ class SettingsRepository(context: Context) {
 
     suspend fun setClockFace(value: ClockFace) = set(CLOCK_FACE, value.name)
     suspend fun setSideCard(value: SideCard) = set(SIDE_CARD, value.name)
+    suspend fun setSideCard2(value: SideCard) = set(SIDE_CARD_2, value.name)
     suspend fun setClockColor(value: Long) = set(CLOCK_COLOR, value)
     suspend fun setClockFont(value: ClockFont) = set(CLOCK_FONT, value.name)
     suspend fun setClockSize(value: Int) = set(CLOCK_SIZE, value)
@@ -151,6 +153,7 @@ class SettingsRepository(context: Context) {
         val HIDE_SYSTEM_HEADS_UP = booleanPreferencesKey("hide_system_heads_up")
         val CLOCK_FACE = stringPreferencesKey("clock_face")
         val SIDE_CARD = stringPreferencesKey("side_card")
+        val SIDE_CARD_2 = stringPreferencesKey("side_card_2")
         val CLOCK_COLOR = longPreferencesKey("clock_color")
         val CLOCK_FONT = stringPreferencesKey("clock_font")
         val CLOCK_SIZE = intPreferencesKey("clock_size_percent")

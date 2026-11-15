@@ -37,6 +37,7 @@ class CommandReceiver : BroadcastReceiver() {
                 val repo = context.graph.settingsRepository
                 intent.getStringExtra("face")?.let { repo.setClockFace(ClockFace.parse(it)) }
                 intent.getStringExtra("card")?.let { v -> SideCard.entries.firstOrNull { it.name == v }?.let { repo.setSideCard(it) } }
+                intent.getStringExtra("card2")?.let { v -> SideCard.entries.firstOrNull { it.name == v }?.let { repo.setSideCard2(it) } }
                 intent.getStringExtra("layout")?.let { v -> ScreenLayout.entries.firstOrNull { it.name == v }?.let { repo.setLayout(it) } }
                 intent.getStringExtra("font")?.let { repo.setClockFont(ClockFont.parse(it)) }
                 intent.getStringExtra("hour")?.let { repo.setHourFormat(HourFormat.parse(it)) }

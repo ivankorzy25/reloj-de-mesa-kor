@@ -33,11 +33,19 @@ class ClockStyleTest {
 
     @Test
     fun `la tarjeta de widget solo aparece si hay widget`() {
-        assertEquals(4, SideCard.available(widgetAvailable = false).size)
-        assertEquals(5, SideCard.available(widgetAvailable = true).size)
-        assertEquals(0, SideCard.pageOf(SideCard.Clima, widgetAvailable = false))
-        assertEquals(4, SideCard.pageOf(SideCard.Widget, widgetAvailable = true))
+        val todas = SideCard.entries.size
+        assertEquals(todas - 1, SideCard.available(widgetAvailable = false).size)
+        assertEquals(todas, SideCard.available(widgetAvailable = true).size)
+        assertEquals(0, SideCard.pageOf(SideCard.Reloj, widgetAvailable = false))
+        assertEquals(todas - 1, SideCard.pageOf(SideCard.Widget, widgetAvailable = true))
         // Sin widget, la página guardada no existe: vuelve a la primera.
         assertEquals(0, SideCard.pageOf(SideCard.Widget, widgetAvailable = false))
+    }
+
+    @Test
+    fun `cada columna tiene su valor de fabrica`() {
+        assertEquals(SideCard.Clima, SideCard.parse(null))
+        assertEquals(SideCard.AlarmaBateria, SideCard.parseSecond(null))
+        assertEquals(SideCard.Musica, SideCard.parseSecond("Musica"))
     }
 }
