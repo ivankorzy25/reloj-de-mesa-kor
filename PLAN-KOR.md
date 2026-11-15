@@ -121,3 +121,14 @@ por una. Siete commits, del `fd3b31f` al `c351cc4`.
 - El clima usa el lugar elegido a mano (no pide permiso de ubicación, a propósito).
 - Probado todo en el S25 en horizontal; en vertical el modo también entra, pero las caras
   están pensadas para apaisado, que es como queda en el cargador.
+
+## Fase 2 — paridad con el StandBy de iOS actual (pedido 15/11/2026, ANTES del video de YouTube)
+Orden sugerido. Cada ítem: compilar, instalar en el S25 por adb, commit, y anotar acá qué quedó.
+1. **Dos columnas de widgets apilados** (layout "Widgets"): cada columna con swipe vertical propio; reutilizar las tarjetas existentes (Clima, Calendario, Alarma/Batería, Música, Widget del sistema) y sumar Recordatorios/Próxima alarma grande.
+2. **Más caras**: Cuadrícula de dígitos (cada dígito en una celda, color pleno), Solar (el color de fondo/dígitos sigue la hora del día: alba, día, atardecer, noche), Flotante (números redondos gordos con color de acento) y Reloj mundial (2-3 ciudades configurables).
+3. **Actividades en vivo a pantalla completa**: llamada entrante (nombre, atender/colgar), timer/cronómetro del sistema, música con carátula grande y controles.
+4. **Memoria por cargador**: recordar cara/tarjeta por ubicación (Wi-Fi SSID + nombre del cargador si lo expone), ej. mesa de luz vs escritorio.
+5. **Fotos**: efecto Ken Burns suave, "recuerdos" por fecha (mismo día otros años), respetar solo favoritas.
+6. **Siempre encendido con atenuación**: en vez de apagar la pantalla, bajar a mínimo brillo con reloj chico tras N minutos, y volver al tocar; cuidar batería (solo cargando).
+7. El comando adb DEMO debe poder fijar también las caras/layouts nuevos (para capturas y video).
+Reglas: todo en español rioplatense, sin romper lo que anda, sin secretos en el repo, README y galería actualizados al terminar.
