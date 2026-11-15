@@ -46,6 +46,10 @@ class NowPlayingSource(private val context: Context) {
             }
     }
 
+    /** ¿Hay algo sonando ahora? Sin convertir la carátula: es para preguntar seguido. */
+    fun isPlaying(): Boolean =
+        hasAccess() && controllers().any { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+
     /** @param previous estado anterior, para no volver a convertir la misma carátula. */
     fun read(previous: NowPlaying?): NowPlaying? {
         val controller = active() ?: return null

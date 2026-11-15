@@ -1,10 +1,12 @@
 package com.realfamousbae.standby.dock.service
 
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.realfamousbae.standby.dock.core.trigger.TriggerEvent
 import com.realfamousbae.standby.dock.graph
+import com.realfamousbae.standby.dock.live.LiveActivity
 import com.realfamousbae.standby.dock.core.prefs.ClockFace
 import com.realfamousbae.standby.dock.core.prefs.ClockFont
 import com.realfamousbae.standby.dock.core.prefs.HourFormat
@@ -50,6 +52,24 @@ class CommandReceiver : BroadcastReceiver() {
                         // queda apagado a propósito, y así se lo vuelve a prender sin tocar el
                         // teléfono).
                         intent.getStringExtra("on")?.let { graph.runState.setEnabled(it.isOn(), "adb") }
+                        intent.getStringExtra("live")?.let {
+                            graph.liveActivities.setDemo(demoActivity(context, it))
+                        }
+                        // --es dump 1 devuelve el registro de diagnóstico como resultado del
+                        // broadcast: en los Samsung, logcat no muestra lo que escriben las
+                        // apps de uno, así que esta es la única forma de leerlo por adb.
+                        if (intent.getStringExtra("dump") != null) {
+                            val vivo = when (graph.liveActivities.current.value) {
+                                is LiveActivity.Call -> "llamada"
+                                is LiveActivity.Timer -> "temporizador"
+                                LiveActivity.Music -> "música"
+                                null -> "nada"
+                            }
+                            pending.resultData = buildString {
+                                append("en vivo: $vivo\n")
+                                append(graph.diagLog.lines().takeLast(20).joinToString("\n"))
+                            }
+                        }
                     } finally {
                         pending.finish()
                     }
@@ -81,10 +101,44 @@ class CommandReceiver : BroadcastReceiver() {
 
     private fun String.isOn(): Boolean = this == "1" || this == "true"
 
+    /**
+     * Actividades en vivo de mentira, para las capturas y el video: no hay forma de hacer que
+     * entre una llamada de verdad desde adb. Solo viven en memoria.
+     */
+    private fun demoActivity(context: Context, kind: String): LiveActivity? = when (kind.lowercase()) {
+        "llamada" -> LiveActivity.Call(
+            name = "Mamá",
+            app = "Teléfono",
+            icon = null,
+            incoming = true,
+            // Botones que no hacen nada: son para la foto, no para atender.
+            answer = noop(context),
+            hangUp = noop(context),
+        )
+        "timer" -> LiveActivity.Timer(
+            label = "Temporizador",
+            app = "Reloj",
+            baseMs = System.currentTimeMillis() + 9 * 60_000L + 58_000L,
+            countDown = true,
+            actions = listOf(LiveActivity.Action("Pausar", noop(context))),
+        )
+        "musica" -> LiveActivity.Music
+        else -> null
+    }
+
+    /** Una intención que no hace nada, para los botones de las actividades de mentira. */
+    private fun noop(context: Context): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        0,
+        Intent(ACTION_NOOP).setPackage(context.packageName),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
     companion object {
         const val ACTION_SHOW = "com.realfamousbae.standby.dock.SHOW_NOW"
         const val ACTION_HIDE = "com.realfamousbae.standby.dock.HIDE_NOW"
         const val ACTION_DEMO = "com.realfamousbae.standby.dock.DEMO"
+        private const val ACTION_NOOP = "com.realfamousbae.standby.dock.NOOP"
 
         /** Fuera del hilo principal y vivo lo que dure el goAsync (unos segundos como mucho). */
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

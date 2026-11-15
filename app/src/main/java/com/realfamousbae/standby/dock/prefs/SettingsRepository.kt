@@ -49,6 +49,8 @@ class SettingsRepository(context: Context) {
                 notificationBannersEnabled = p[BANNERS_ENABLED] ?: defaults.notificationBannersEnabled,
                 notificationBlockedPackages = p[BLOCKED_PACKAGES] ?: defaults.notificationBlockedPackages,
                 hideSystemHeadsUp = p[HIDE_SYSTEM_HEADS_UP] ?: defaults.hideSystemHeadsUp,
+                liveActivitiesEnabled = p[LIVE_ENABLED] ?: defaults.liveActivitiesEnabled,
+                liveMusicFullScreen = p[LIVE_MUSIC] ?: defaults.liveMusicFullScreen,
                 clockFace = ClockFace.parse(p[CLOCK_FACE]),
                 sideCard = SideCard.parse(p[SIDE_CARD]),
                 sideCard2 = SideCard.parseSecond(p[SIDE_CARD_2]),
@@ -91,6 +93,8 @@ class SettingsRepository(context: Context) {
     suspend fun setLayout(value: ScreenLayout) = set(LAYOUT, value.name)
     suspend fun setBannersEnabled(value: Boolean) = set(BANNERS_ENABLED, value)
     suspend fun setHideSystemHeadsUp(value: Boolean) = set(HIDE_SYSTEM_HEADS_UP, value)
+    suspend fun setLiveActivities(value: Boolean) = set(LIVE_ENABLED, value)
+    suspend fun setLiveMusicFullScreen(value: Boolean) = set(LIVE_MUSIC, value)
 
     suspend fun setClockFace(value: ClockFace) = set(CLOCK_FACE, value.name)
     suspend fun setSideCard(value: SideCard) = set(SIDE_CARD, value.name)
@@ -155,6 +159,8 @@ class SettingsRepository(context: Context) {
         val BANNERS_ENABLED = booleanPreferencesKey("notification_banners_enabled")
         val BLOCKED_PACKAGES = stringSetPreferencesKey("notification_blocked_packages")
         val HIDE_SYSTEM_HEADS_UP = booleanPreferencesKey("hide_system_heads_up")
+        val LIVE_ENABLED = booleanPreferencesKey("live_activities_enabled")
+        val LIVE_MUSIC = booleanPreferencesKey("live_music_full_screen")
         val CLOCK_FACE = stringPreferencesKey("clock_face")
         val SIDE_CARD = stringPreferencesKey("side_card")
         val SIDE_CARD_2 = stringPreferencesKey("side_card_2")

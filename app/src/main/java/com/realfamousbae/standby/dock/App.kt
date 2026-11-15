@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.realfamousbae.standby.dock.core.prefs.StandbySettings
 import com.realfamousbae.standby.dock.diag.DiagLog
+import com.realfamousbae.standby.dock.live.LiveActivityBus
 import com.realfamousbae.standby.dock.notifications.NotificationBus
 import com.realfamousbae.standby.dock.media.NowPlayingSource
 import com.realfamousbae.standby.dock.notifications.QuietMode
@@ -56,6 +57,7 @@ class AppGraph(app: Application) {
     val controller = StandbyController()
     val widgetHost = StandbyWidgetHost(app)
     val notificationBus = NotificationBus()
+    val liveActivities = LiveActivityBus(appScope)
     val quietMode = QuietMode(app, diagLog)
     val immich = ImmichClient(diagLog)
     val weather = WeatherRepository(diagLog)

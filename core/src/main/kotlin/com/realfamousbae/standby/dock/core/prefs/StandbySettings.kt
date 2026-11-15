@@ -29,6 +29,13 @@ data class StandbySettings(
     /** Apps de las que NO se muestran avisos (por defecto se muestran todas). */
     val notificationBlockedPackages: Set<String> = emptySet(),
     /**
+     * Actividades en vivo a pantalla completa: la llamada que entra y el temporizador que
+     * corre se adueñan de la pantalla, como en el StandBy del iPhone.
+     */
+    val liveActivitiesEnabled: Boolean = true,
+    /** Y la música también, con la carátula grande (se puede dejar solo el reloj). */
+    val liveMusicFullScreen: Boolean = true,
+    /**
      * Mientras el modo está en pantalla, ocultar las notificaciones emergentes del sistema
      * (con nuestro propio "No molestar": llamadas y alarmas pasan, el resto sin sonido).
      */

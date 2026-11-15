@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -42,11 +46,14 @@ import com.realfamousbae.standby.dock.core.prefs.ScreenLayout
 import com.realfamousbae.standby.dock.core.prefs.StandbySettings
 import com.realfamousbae.standby.dock.core.ui.EdgeFade
 import com.realfamousbae.standby.dock.faces.ClockFaceHost
+import com.realfamousbae.standby.dock.live.LiveActivity
+import com.realfamousbae.standby.dock.live.LiveActivityScreen
 import com.realfamousbae.standby.dock.notifications.BannerNotification
 import com.realfamousbae.standby.dock.media.NowPlayingSource
 import com.realfamousbae.standby.dock.photos.ImmichClient
 import com.realfamousbae.standby.dock.weather.WeatherRepository
 import com.realfamousbae.standby.dock.widgets.StandbyWidgetHost
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
 private val CardShape = RoundedCornerShape(36.dp)
@@ -54,21 +61,24 @@ private val CardShape = RoundedCornerShape(36.dp)
 /**
  * Cierra el modo con un toque, pero no cuando el dedo arrastra: pasar de cara o de tarjeta
  * no tiene que cerrar nada (ni siquiera cuando el carrusel ya está en la última página y
- * nadie se queda con el movimiento).
+ * nadie se queda con el movimiento). Tampoco cuando el toque se lo quedó algo de adentro:
+ * atender una llamada o tocar play no es "cerrame el reloj".
  */
 private fun Modifier.exitOnTap(onExit: () -> Unit): Modifier = pointerInput(onExit) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var dragged = false
+        var consumed = down.isConsumed
         while (true) {
             val event = awaitPointerEvent()
             val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (change.isConsumed) consumed = true
             if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
                 dragged = true
             }
             if (!change.pressed) break
         }
-        if (!dragged) onExit()
+        if (!dragged && !consumed) onExit()
     }
 }
 
@@ -90,6 +100,7 @@ fun StandbyScreen(
     weather: WeatherRepository,
     nowPlaying: NowPlayingSource,
     banners: Flow<BannerNotification>,
+    live: LiveActivity?,
     onOpenNotification: (BannerNotification) -> Unit,
     onFaceChange: (ClockFace) -> Unit,
     onCardChange: (SideCard) -> Unit,
@@ -99,13 +110,27 @@ fun StandbyScreen(
     // Las tarjetas (clima, agenda, alarma, música) están siempre: la segunda columna ya no
     // depende de que haya un widget del sistema elegido.
     val layout = ScreenLayout.resolve(settings.layout, cardAvailable = true)
+    // Lo que está pasando ahora y se lleva toda la pantalla: la llamada o el temporizador que
+    // vienen del oyente de notificaciones, y la música, que se pregunta acá.
+    val music = rememberMusicLive(
+        enabled = settings.liveActivitiesEnabled && settings.liveMusicFullScreen,
+        source = nowPlaying,
+    )
+    val liveNow = if (settings.liveActivitiesEnabled) live ?: music else null
     Box(
         Modifier
             .fillMaxSize()
             .background(StandbyColors.background)
             .exitOnTap(onExit),
     ) {
-        when (layout) {
+        if (liveNow != null) {
+            LiveActivityScreen(
+                activity = liveNow,
+                style = style,
+                nowPlaying = nowPlaying,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else when (layout) {
             ScreenLayout.ClockAndWidget -> Row(
                 Modifier.fillMaxSize().padding(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -188,6 +213,26 @@ fun StandbyScreen(
             modifier = Modifier.align(Alignment.TopCenter),
         )
     }
+}
+
+/**
+ * ¿Hay música sonando para mostrarla grande? Se pregunta cada dos segundos y sin tocar la
+ * carátula: lo caro (bajar la imagen) lo hace recién la pantalla de la música.
+ */
+@Composable
+private fun rememberMusicLive(enabled: Boolean, source: NowPlayingSource): LiveActivity? {
+    var sonando by remember { mutableStateOf(false) }
+    LaunchedEffect(enabled) {
+        if (!enabled) {
+            sonando = false
+            return@LaunchedEffect
+        }
+        while (true) {
+            sonando = source.isPlaying()
+            delay(2_000L)
+        }
+    }
+    return LiveActivity.Music.takeIf { sonando }
 }
 
 @Composable

@@ -79,6 +79,7 @@ class StandbyActivity : ComponentActivity() {
             // El controlador de brillo necesita saberlo para bajar el tope de noche.
             LaunchedEffect(night) { nightActive.value = night }
             val style = rememberClockStyle(settings, night = night)
+            val live by graph.liveActivities.current.collectAsStateWithLifecycle()
             StandbyScreen(
                 settings = settings,
                 style = style,
@@ -88,6 +89,7 @@ class StandbyActivity : ComponentActivity() {
                 weather = graph.weather,
                 nowPlaying = graph.nowPlaying,
                 banners = graph.notificationBus.banners,
+                live = live,
                 onOpenNotification = ::openNotification,
                 onFaceChange = { face ->
                     if (face != graph.settings.value.clockFace) {

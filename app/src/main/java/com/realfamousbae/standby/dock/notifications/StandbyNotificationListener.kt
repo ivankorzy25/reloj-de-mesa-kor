@@ -15,6 +15,7 @@ import com.realfamousbae.standby.dock.core.notifications.LockscreenPrivacy
 import com.realfamousbae.standby.dock.core.notifications.NotificationFilter
 import com.realfamousbae.standby.dock.core.notifications.NotificationInfo
 import com.realfamousbae.standby.dock.graph
+import com.realfamousbae.standby.dock.live.LiveActivityParser
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -47,6 +48,10 @@ class StandbyNotificationListener : NotificationListenerService() {
             null -> "no se lee, se oculta"
         }
         graph.diagLog.log("Notificaciones: oyente conectado; contenido en bloqueo: $privacy")
+        // Las que ya estaban colgadas no se muestran como avisos (serían viejas), pero sí
+        // cuentan como actividades en vivo: si el teléfono se reinició o la app se actualizó
+        // en medio de una llamada o de un temporizador, eso sigue pasando ahora.
+        runCatching { activeNotifications.orEmpty().forEach(::trackLiveActivity) }
     }
 
     override fun onListenerDisconnected() {
@@ -56,6 +61,7 @@ class StandbyNotificationListener : NotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         dedupe.forget(sbn.key)
+        graph.liveActivities.remove(sbn.key)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification, rankingMap: RankingMap) {
@@ -68,6 +74,7 @@ class StandbyNotificationListener : NotificationListenerService() {
         // Lo recordamos siempre, incluso con el modo escondido: si no, actualizar una
         // notificación vieja con el modo en pantalla parecería una nueva.
         val fresh = dedupe.accept(sbn.key, title, text)
+        trackLiveActivity(sbn)
         if (!graph.controller.visible.value || !fresh) return
 
         val ranking = Ranking().takeIf { rankingMap.getRanking(sbn.key, it) }
@@ -123,6 +130,33 @@ class StandbyNotificationListener : NotificationListenerService() {
             ),
         )
         graph.diagLog.log("Notificaciones: aviso mostrado")
+    }
+
+
+    /**
+     * Llamadas y temporizadores del reloj: se guardan en el bus de actividades en vivo para
+     * que la pantalla del modo los muestre grandes. En el registro no entra ni el nombre de
+     * quien llama ni el de la app.
+     */
+    private fun trackLiveActivity(sbn: StatusBarNotification) {
+        val n = sbn.notification
+        val esLlamada = LiveActivityParser.isCall(n)
+        val esTimer = !esLlamada && LiveActivityParser.isTimer(this, sbn)
+        if (!esLlamada && !esTimer) return
+        val pm = packageManager
+        val app = runCatching { pm.getApplicationInfo(sbn.packageName, 0) }.getOrNull()
+        val appName = app?.let { pm.getApplicationLabel(it).toString() } ?: sbn.packageName
+        val activity = if (esLlamada) {
+            val icon = app?.let {
+                runCatching { pm.getApplicationIcon(it).toBitmap(96, 96).asImageBitmap() }.getOrNull()
+            }
+            LiveActivityParser.call(sbn, appName, icon, fallbackName = "Número desconocido")
+        } else {
+            LiveActivityParser.timer(this, sbn, appName, fallbackLabel = "Temporizador")
+        }
+        if (activity == null) return
+        graph.liveActivities.put(sbn.key, activity)
+        graph.diagLog.log("En vivo: ${if (esLlamada) "llamada" else "temporizador"} en pantalla")
     }
 
     companion object {
