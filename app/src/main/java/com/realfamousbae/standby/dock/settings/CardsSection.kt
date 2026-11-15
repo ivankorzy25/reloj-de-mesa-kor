@@ -29,6 +29,7 @@ import com.realfamousbae.standby.dock.calendar.CalendarEvents
 import com.realfamousbae.standby.dock.core.prefs.ScreenLayout
 import com.realfamousbae.standby.dock.core.prefs.SideCard
 import com.realfamousbae.standby.dock.graph
+import com.realfamousbae.standby.dock.place.PlaceDetector
 import kotlinx.coroutines.launch
 
 /**
@@ -118,6 +119,25 @@ fun CardsSection(onPickWidget: (AppWidgetProviderInfo) -> Unit) {
     }
     OutlinedButton(onClick = { pickerOpen = true }, modifier = Modifier.fillMaxWidth()) {
         Text(if (widget == null) "Elegir widget del sistema" else "Cambiar widget del sistema")
+    }
+
+    // --- Memoria por cargador ---
+    val place = remember(refresh) { PlaceDetector(context).current() }
+    SwitchRow(
+        title = "Acordarse de cada lugar",
+        subtitle = "Cada cargador se guarda por separado: la mesa de luz puede quedar con el " +
+            "flip y la alarma, y el escritorio con la agenda. Ahora estás en: ${place.label}.",
+        checked = settings.placeMemoryEnabled,
+    ) { on -> scope.launch { repository.setPlaceMemory(on) } }
+    if (settings.placeMemoryEnabled && settings.places.isNotEmpty()) {
+        Text(
+            "Lugares guardados: ${settings.places.size}.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        OutlinedButton(
+            onClick = { scope.launch { repository.forgetPlaces() } },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Olvidar los lugares guardados") }
     }
 
     if (pickerOpen) {

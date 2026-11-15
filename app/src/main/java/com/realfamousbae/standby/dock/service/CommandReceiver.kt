@@ -5,8 +5,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.realfamousbae.standby.dock.core.trigger.TriggerEvent
+import com.realfamousbae.standby.dock.AppGraph
+import com.realfamousbae.standby.dock.core.place.PlacePrefs
 import com.realfamousbae.standby.dock.graph
 import com.realfamousbae.standby.dock.live.LiveActivity
+import com.realfamousbae.standby.dock.place.PlaceDetector
 import com.realfamousbae.standby.dock.core.prefs.ClockFace
 import com.realfamousbae.standby.dock.core.prefs.ClockFont
 import com.realfamousbae.standby.dock.core.prefs.HourFormat
@@ -16,6 +19,7 @@ import com.realfamousbae.standby.dock.prefs.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -48,6 +52,9 @@ class CommandReceiver : BroadcastReceiver() {
                 scope.launch {
                     try {
                         applyDemo(graph.settingsRepository, intent)
+                        // Lo que fija el DEMO manda: si no, la memoria por cargador volvería a
+                        // poner lo de la última vez justo cuando se está sacando la captura.
+                        rememberDemoPlace(context, graph, intent)
                         // Prender o apagar el reloj desde adb (después de un "forzar detención"
                         // queda apagado a propósito, y así se lo vuelve a prender sin tocar el
                         // teléfono).
@@ -65,8 +72,11 @@ class CommandReceiver : BroadcastReceiver() {
                                 LiveActivity.Music -> "música"
                                 null -> "nada"
                             }
+                            val lugar = PlaceDetector(context).current()
+                            val guardado = graph.settings.value.places[lugar.key]
                             pending.resultData = buildString {
                                 append("en vivo: $vivo\n")
+                                append("lugar: ${lugar.label} [${lugar.key}] guardado=$guardado\n")
                                 append(graph.diagLog.lines().takeLast(20).joinToString("\n"))
                             }
                         }
@@ -97,6 +107,23 @@ class CommandReceiver : BroadcastReceiver() {
         intent.getStringExtra("nightsensor")?.let { repo.setNightUseLightSensor(it.isOn()) }
         intent.getStringExtra("nightstart")?.toIntOrNull()?.let { repo.setNightStart(it) }
         intent.getStringExtra("nightend")?.toIntOrNull()?.let { repo.setNightEnd(it) }
+    }
+
+    /** Dejar lo que fijó el DEMO como "lo que había quedado" en este lugar. */
+    private suspend fun rememberDemoPlace(context: Context, graph: AppGraph, intent: Intent) {
+        val toca = CAMPOS_DE_LUGAR.any { intent.getStringExtra(it) != null }
+        if (!toca) return
+        val settings = graph.settingsRepository.settings.first()
+        if (!settings.placeMemoryEnabled) return
+        graph.settingsRepository.rememberPlace(
+            key = PlaceDetector(context).current().key,
+            prefs = PlacePrefs(
+                face = settings.clockFace,
+                card = settings.sideCard,
+                card2 = settings.sideCard2,
+                layout = settings.layout,
+            ),
+        )
     }
 
     private fun String.isOn(): Boolean = this == "1" || this == "true"
@@ -139,6 +166,9 @@ class CommandReceiver : BroadcastReceiver() {
         const val ACTION_HIDE = "com.realfamousbae.standby.dock.HIDE_NOW"
         const val ACTION_DEMO = "com.realfamousbae.standby.dock.DEMO"
         private const val ACTION_NOOP = "com.realfamousbae.standby.dock.NOOP"
+
+        /** Los datos del DEMO que también son parte de la memoria de cada lugar. */
+        private val CAMPOS_DE_LUGAR = listOf("face", "card", "card2", "layout")
 
         /** Fuera del hilo principal y vivo lo que dure el goAsync (unos segundos como mucho). */
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

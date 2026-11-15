@@ -1,6 +1,7 @@
 package com.realfamousbae.standby.dock.core.prefs
 
 import com.realfamousbae.standby.dock.core.night.NightMode
+import com.realfamousbae.standby.dock.core.place.PlacePrefs
 
 /**
  * Ajustes de Iván, de los que depende la lógica. Se guardan en DataStore (capa :app);
@@ -57,6 +58,12 @@ data class StandbySettings(
     val hourFormat: HourFormat = HourFormat.Sistema,
     /** Ciudades de la cara "Reloj mundial" (hasta [WorldCities.MAX]). */
     val worldCities: List<WorldCity> = WorldCities.defaults,
+
+    // --- Memoria por cargador ---
+    /** Acordarse de la cara y las tarjetas de cada lugar (mesa de luz, escritorio…). */
+    val placeMemoryEnabled: Boolean = true,
+    /** Lo guardado de cada lugar, por nombre de lugar (ver PlaceMemory). */
+    val places: Map<String, PlacePrefs> = emptyMap(),
 
     // --- Modo noche ---
     val nightEnabled: Boolean = true,

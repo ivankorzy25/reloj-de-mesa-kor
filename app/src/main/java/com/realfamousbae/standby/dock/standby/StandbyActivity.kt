@@ -18,7 +18,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.realfamousbae.standby.dock.core.trigger.TriggerEvent
+import com.realfamousbae.standby.dock.core.place.PlacePrefs
 import com.realfamousbae.standby.dock.graph
+import com.realfamousbae.standby.dock.place.PlaceDetector
 import com.realfamousbae.standby.dock.notifications.BannerNotification
 import com.realfamousbae.standby.dock.sensors.LightSensor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,9 @@ class StandbyActivity : ComponentActivity() {
 
     /** Modo noche prendido: lo decide la pantalla y lo usa el control de brillo. */
     private val nightActive = MutableStateFlow(false)
+
+    /** El lugar donde está apoyado ahora (lo da el cargador); null hasta que se sabe. */
+    private var placeKey: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +74,22 @@ class StandbyActivity : ComponentActivity() {
             controller.visible.first { !it }
             finish()
         }
+        // Memoria por cargador: si este lugar ya se usó, se vuelve a dejar como estaba.
+        lifecycleScope.launch {
+            val place = PlaceDetector(this@StandbyActivity).current()
+            placeKey = place.key
+            val settings = graph.settingsRepository.settings.first()
+            val saved = settings.places[place.key]
+            if (!settings.placeMemoryEnabled || saved == null) return@launch
+            with(graph.settingsRepository) {
+                setClockFace(saved.face)
+                setSideCard(saved.card)
+                setSideCard2(saved.card2)
+                setLayout(saved.layout)
+            }
+            graph.diagLog.log("Lugar: ${place.label}, se puso como había quedado")
+        }
+
         graph.diagLog.log("Modo: mostrado")
 
         setContent {
@@ -93,22 +114,47 @@ class StandbyActivity : ComponentActivity() {
                 onOpenNotification = ::openNotification,
                 onFaceChange = { face ->
                     if (face != graph.settings.value.clockFace) {
-                        lifecycleScope.launch { graph.settingsRepository.setClockFace(face) }
+                        lifecycleScope.launch {
+                            graph.settingsRepository.setClockFace(face)
+                            rememberPlace()
+                        }
                     }
                 },
                 onCardChange = { card ->
                     if (card != graph.settings.value.sideCard) {
-                        lifecycleScope.launch { graph.settingsRepository.setSideCard(card) }
+                        lifecycleScope.launch {
+                            graph.settingsRepository.setSideCard(card)
+                            rememberPlace()
+                        }
                     }
                 },
                 onCard2Change = { card ->
                     if (card != graph.settings.value.sideCard2) {
-                        lifecycleScope.launch { graph.settingsRepository.setSideCard2(card) }
+                        lifecycleScope.launch {
+                            graph.settingsRepository.setSideCard2(card)
+                            rememberPlace()
+                        }
                     }
                 },
                 onExit = { finish() },
             )
         }
+    }
+
+    /** Dejar anotado cómo quedó este lugar, para la próxima vez que lo apoye acá. */
+    private suspend fun rememberPlace() {
+        val key = placeKey ?: return
+        val settings = graph.settingsRepository.settings.first()
+        if (!settings.placeMemoryEnabled) return
+        graph.settingsRepository.rememberPlace(
+            key = key,
+            prefs = PlacePrefs(
+                face = settings.clockFace,
+                card = settings.sideCard,
+                card2 = settings.sideCard2,
+                layout = settings.layout,
+            ),
+        )
     }
 
     /**

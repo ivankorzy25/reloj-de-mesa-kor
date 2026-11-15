@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.realfamousbae.standby.dock.core.place.PlaceMemory
+import com.realfamousbae.standby.dock.core.place.PlacePrefs
 import com.realfamousbae.standby.dock.core.prefs.ClockFace
 import com.realfamousbae.standby.dock.core.prefs.ClockFont
 import com.realfamousbae.standby.dock.core.prefs.HourFormat
@@ -60,6 +62,8 @@ class SettingsRepository(context: Context) {
                 showSeconds = p[SHOW_SECONDS] ?: defaults.showSeconds,
                 hourFormat = HourFormat.parse(p[HOUR_FORMAT]),
                 worldCities = WorldCities.decode(p[WORLD_CITIES]),
+                placeMemoryEnabled = p[PLACE_MEMORY] ?: defaults.placeMemoryEnabled,
+                places = PlaceMemory.decode(p[PLACES]),
                 nightEnabled = p[NIGHT_ENABLED] ?: defaults.nightEnabled,
                 nightStartMinutes = p[NIGHT_START] ?: defaults.nightStartMinutes,
                 nightEndMinutes = p[NIGHT_END] ?: defaults.nightEndMinutes,
@@ -105,6 +109,22 @@ class SettingsRepository(context: Context) {
     suspend fun setShowSeconds(value: Boolean) = set(SHOW_SECONDS, value)
     suspend fun setHourFormat(value: HourFormat) = set(HOUR_FORMAT, value.name)
     suspend fun setWorldCities(value: List<WorldCity>) = set(WORLD_CITIES, WorldCities.encode(value))
+
+    suspend fun setPlaceMemory(value: Boolean) = set(PLACE_MEMORY, value)
+
+    /** Guardar cómo quedó un lugar (la cara y las tarjetas que están puestas ahora). */
+    suspend fun rememberPlace(key: String, prefs: PlacePrefs) {
+        store.edit {
+            val places = PlaceMemory.decode(it[PLACES])
+            if (places[key] == prefs) return@edit
+            it[PLACES] = PlaceMemory.encode(PlaceMemory.remember(places, key, prefs))
+        }
+    }
+
+    /** Olvidar todos los lugares (el botón de Ajustes). */
+    suspend fun forgetPlaces() {
+        store.edit { it.remove(PLACES) }
+    }
 
     suspend fun setNightEnabled(value: Boolean) = set(NIGHT_ENABLED, value)
     suspend fun setNightStart(value: Int) = set(NIGHT_START, value)
@@ -170,6 +190,8 @@ class SettingsRepository(context: Context) {
         val SHOW_SECONDS = booleanPreferencesKey("show_seconds")
         val HOUR_FORMAT = stringPreferencesKey("hour_format")
         val WORLD_CITIES = stringPreferencesKey("world_cities")
+        val PLACE_MEMORY = booleanPreferencesKey("place_memory_enabled")
+        val PLACES = stringPreferencesKey("places")
         val NIGHT_ENABLED = booleanPreferencesKey("night_enabled")
         val NIGHT_START = intPreferencesKey("night_start_minutes")
         val NIGHT_END = intPreferencesKey("night_end_minutes")
