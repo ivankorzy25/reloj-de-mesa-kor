@@ -1,0 +1,221 @@
+package com.realfamousbae.standby.dock.standby
+
+import android.appwidget.AppWidgetHostView
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Shader
+import android.view.View
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.realfamousbae.standby.dock.cards.SideCardHost
+import com.realfamousbae.standby.dock.core.prefs.ClockFace
+import com.realfamousbae.standby.dock.core.prefs.SideCard
+import com.realfamousbae.standby.dock.core.prefs.ScreenLayout
+import com.realfamousbae.standby.dock.core.prefs.StandbySettings
+import com.realfamousbae.standby.dock.core.ui.EdgeFade
+import com.realfamousbae.standby.dock.faces.ClockFaceHost
+import com.realfamousbae.standby.dock.notifications.BannerNotification
+import com.realfamousbae.standby.dock.media.NowPlayingSource
+import com.realfamousbae.standby.dock.photos.ImmichClient
+import com.realfamousbae.standby.dock.weather.WeatherRepository
+import com.realfamousbae.standby.dock.widgets.StandbyWidgetHost
+import kotlinx.coroutines.flow.Flow
+
+private val CardShape = RoundedCornerShape(36.dp)
+
+/**
+ * Cierra el modo con un toque, pero no cuando el dedo arrastra: pasar de cara o de tarjeta
+ * no tiene que cerrar nada (ni siquiera cuando el carrusel ya está en la última página y
+ * nadie se queda con el movimiento).
+ */
+private fun Modifier.exitOnTap(onExit: () -> Unit): Modifier = pointerInput(onExit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var dragged = false
+        while (true) {
+            val event = awaitPointerEvent()
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                dragged = true
+            }
+            if (!change.pressed) break
+        }
+        if (!dragged) onExit()
+    }
+}
+
+/** Ancho del desvanecido del widget en los bordes de la tarjeta. */
+private val WidgetFadeWidth = 40.dp
+
+/**
+ * Pantalla del modo: el reloj (con sus caras, que se pasan con el dedo) a toda la pantalla,
+ * o dos tarjetas iguales "reloj | tarjeta", y arriba los avisos de notificaciones. Un toque
+ * en el reloj cierra el modo; lo que se toca dentro de la tarjeta lo recibe la tarjeta.
+ */
+@Composable
+fun StandbyScreen(
+    settings: StandbySettings,
+    style: ClockStyle,
+    widgetId: Int?,
+    widgetHost: StandbyWidgetHost,
+    immich: ImmichClient,
+    weather: WeatherRepository,
+    nowPlaying: NowPlayingSource,
+    banners: Flow<BannerNotification>,
+    onOpenNotification: (BannerNotification) -> Unit,
+    onFaceChange: (ClockFace) -> Unit,
+    onCardChange: (SideCard) -> Unit,
+    onExit: () -> Unit,
+) {
+    // Las tarjetas (clima, agenda, alarma, música) están siempre: la segunda columna ya no
+    // depende de que haya un widget del sistema elegido.
+    val layout = ScreenLayout.resolve(settings.layout, cardAvailable = true)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(StandbyColors.background)
+            .exitOnTap(onExit),
+    ) {
+        when (layout) {
+            ScreenLayout.ClockAndWidget -> Row(
+                Modifier.fillMaxSize().padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                Card(Modifier.weight(1f), style) {
+                    ClockFaceHost(
+                        settings = settings,
+                        style = style,
+                        immich = immich,
+                        maxTimeSize = 180.sp,
+                        dateSize = 22.sp,
+                        onFaceChange = onFaceChange,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                // La tarjeta se queda con sus toques: tocarla no cierra el modo.
+                Card(Modifier.weight(1f).exitOnTap { }, style) {
+                    SideCardHost(
+                        settings = settings,
+                        style = style,
+                        weather = weather,
+                        nowPlaying = nowPlaying,
+                        widgetAvailable = widgetId != null,
+                        widget = { if (widgetId != null) key(widgetId) { WidgetView(widgetHost, widgetId, style) } },
+                        onCardChange = onCardChange,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+            ScreenLayout.ClockOnly -> ClockFaceHost(
+                settings = settings,
+                style = style,
+                immich = immich,
+                maxTimeSize = 420.sp,
+                dateSize = 28.sp,
+                onFaceChange = onFaceChange,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        NotificationBannerHost(
+            banners = banners,
+            style = style,
+            onOpen = onOpenNotification,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+    }
+}
+
+@Composable
+internal fun Card(modifier: Modifier, style: ClockStyle, content: @Composable () -> Unit) {
+    Box(
+        modifier
+            .fillMaxHeight()
+            .clip(CardShape)
+            .background(style.cardColor)
+            .border(1.dp, style.cardBorder, CardShape),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+/** Widget del sistema; le avisamos el tamaño real de la tarjeta para que se acomode. */
+@Composable
+private fun WidgetView(widgetHost: StandbyWidgetHost, widgetId: Int, style: ClockStyle) {
+    val density = LocalDensity.current
+    val context = LocalContext.current
+    val hostView: AppWidgetHostView? = remember { widgetHost.createView(context, widgetId) }
+    AndroidView(
+        factory = { hostView ?: View(it) },
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+            .fadeEdges(WidgetFadeWidth, style.cardColor)
+            .onSizeChanged { size ->
+                val view = hostView ?: return@onSizeChanged
+                with(density) { widgetHost.updateSize(view, size.width.toDp().value, size.height.toDp().value) }
+            },
+    )
+}
+
+/**
+ * Desvanece el borde del widget contra la tarjeta: encima del widget, en cada borde, se
+ * dibuja un "velo" del color de la tarjeta con perfil gaussiano de transparencia
+ * ([EdgeFade]). El fondo de la tarjeta es sólido, así que es lo mismo que una máscara de
+ * transparencia, pero con tramado: entre el fondo del widget y el de la tarjeta hay pocos
+ * niveles de brillo y sin tramado el degradado se vería escalonado.
+ */
+private fun Modifier.fadeEdges(width: Dp, color: Color): Modifier = drawWithCache {
+    val fade = minOf(width.toPx(), size.minDimension / 2)
+    val stops = EdgeFade.stops()
+    val positions = stops.map { it.first }.toFloatArray()
+    val colors = stops.map { color.copy(alpha = it.second).toArgb() }.toIntArray()
+    fun paint(x0: Float, y0: Float, x1: Float, y1: Float) = Paint().apply {
+        isDither = true
+        isAntiAlias = false
+        shader = LinearGradient(x0, y0, x1, y1, colors, positions, Shader.TileMode.CLAMP)
+    }
+    val w = size.width
+    val h = size.height
+    val left = paint(0f, 0f, fade, 0f)
+    val right = paint(w, 0f, w - fade, 0f)
+    val top = paint(0f, 0f, 0f, fade)
+    val bottom = paint(0f, h, 0f, h - fade)
+    onDrawWithContent {
+        drawContent()
+        if (fade <= 0f) return@onDrawWithContent
+        drawIntoCanvas { canvas ->
+            val c = canvas.nativeCanvas
+            c.drawRect(0f, 0f, fade, h, left)
+            c.drawRect(w - fade, 0f, w, h, right)
+            c.drawRect(0f, 0f, w, fade, top)
+            c.drawRect(0f, h - fade, w, h, bottom)
+        }
+    }
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo en la build debug: órdenes para probar por adb. En release este receiver no existe. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- El permiso DUMP lo tienen adb shell y el sistema; a las apps comunes no se les da. -->
+        <receiver
+            android:name=".debug.DebugCommandReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.realfamousbae.standby.dock.debug.STOP_SERVICE" />
+                <action android:name="com.realfamousbae.standby.dock.debug.RUN_KEEP_ALIVE" />
+                <action android:name="com.realfamousbae.standby.dock.debug.SHOW_STANDBY" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
