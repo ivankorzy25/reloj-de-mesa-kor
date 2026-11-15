@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import com.realfamousbae.standby.dock.core.prefs.ClockFace
 import com.realfamousbae.standby.dock.core.prefs.ClockFont
 import com.realfamousbae.standby.dock.core.prefs.HourFormat
 import com.realfamousbae.standby.dock.core.prefs.StandbySettings
+import com.realfamousbae.standby.dock.core.prefs.WorldCities
 import com.realfamousbae.standby.dock.graph
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -55,6 +57,22 @@ fun ClockSection() {
         selected = settings.clockFace,
         label = { faceLabel(it) },
     ) { face -> scope.launch { repository.setClockFace(face) } }
+
+    if (settings.clockFace == ClockFace.Mundial) {
+        Text("Ciudades del reloj mundial (hasta ${WorldCities.MAX})")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            WorldCities.catalog.forEach { city ->
+                val chosen = settings.worldCities.any { it.name == city.name }
+                FilterChip(
+                    selected = chosen,
+                    onClick = {
+                        scope.launch { repository.setWorldCities(WorldCities.toggle(settings.worldCities, city)) }
+                    },
+                    label = { Text(city.name) },
+                )
+            }
+        }
+    }
 
     Text("Color")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -108,7 +126,11 @@ fun ClockSection() {
 
 internal fun faceLabel(face: ClockFace): String = when (face) {
     ClockFace.Digital -> "Digital"
+    ClockFace.Cuadricula -> "Cuadrícula"
+    ClockFace.Flotante -> "Flotante"
+    ClockFace.Solar -> "Solar"
     ClockFace.Analogico -> "Analógica"
     ClockFace.Flip -> "Flip"
+    ClockFace.Mundial -> "Mundial"
     ClockFace.Fotos -> "Fotos"
 }

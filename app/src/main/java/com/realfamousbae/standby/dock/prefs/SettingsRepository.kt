@@ -16,6 +16,8 @@ import com.realfamousbae.standby.dock.core.prefs.HourFormat
 import com.realfamousbae.standby.dock.core.prefs.ScreenLayout
 import com.realfamousbae.standby.dock.core.prefs.SideCard
 import com.realfamousbae.standby.dock.core.prefs.StandbySettings
+import com.realfamousbae.standby.dock.core.prefs.WorldCities
+import com.realfamousbae.standby.dock.core.prefs.WorldCity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -55,6 +57,7 @@ class SettingsRepository(context: Context) {
                 clockSizePercent = p[CLOCK_SIZE] ?: defaults.clockSizePercent,
                 showSeconds = p[SHOW_SECONDS] ?: defaults.showSeconds,
                 hourFormat = HourFormat.parse(p[HOUR_FORMAT]),
+                worldCities = WorldCities.decode(p[WORLD_CITIES]),
                 nightEnabled = p[NIGHT_ENABLED] ?: defaults.nightEnabled,
                 nightStartMinutes = p[NIGHT_START] ?: defaults.nightStartMinutes,
                 nightEndMinutes = p[NIGHT_END] ?: defaults.nightEndMinutes,
@@ -97,6 +100,7 @@ class SettingsRepository(context: Context) {
     suspend fun setClockSize(value: Int) = set(CLOCK_SIZE, value)
     suspend fun setShowSeconds(value: Boolean) = set(SHOW_SECONDS, value)
     suspend fun setHourFormat(value: HourFormat) = set(HOUR_FORMAT, value.name)
+    suspend fun setWorldCities(value: List<WorldCity>) = set(WORLD_CITIES, WorldCities.encode(value))
 
     suspend fun setNightEnabled(value: Boolean) = set(NIGHT_ENABLED, value)
     suspend fun setNightStart(value: Int) = set(NIGHT_START, value)
@@ -159,6 +163,7 @@ class SettingsRepository(context: Context) {
         val CLOCK_SIZE = intPreferencesKey("clock_size_percent")
         val SHOW_SECONDS = booleanPreferencesKey("show_seconds")
         val HOUR_FORMAT = stringPreferencesKey("hour_format")
+        val WORLD_CITIES = stringPreferencesKey("world_cities")
         val NIGHT_ENABLED = booleanPreferencesKey("night_enabled")
         val NIGHT_START = intPreferencesKey("night_start_minutes")
         val NIGHT_END = intPreferencesKey("night_end_minutes")

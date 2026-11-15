@@ -48,6 +48,8 @@ data class StandbySettings(
     val clockSizePercent: Int = 100,
     val showSeconds: Boolean = false,
     val hourFormat: HourFormat = HourFormat.Sistema,
+    /** Ciudades de la cara "Reloj mundial" (hasta [WorldCities.MAX]). */
+    val worldCities: List<WorldCity> = WorldCities.defaults,
 
     // --- Modo noche ---
     val nightEnabled: Boolean = true,

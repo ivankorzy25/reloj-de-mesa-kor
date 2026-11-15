@@ -8,11 +8,23 @@ enum class ClockFace {
     /** Dígitos grandes a todo el ancho. */
     Digital,
 
+    /** Cada dígito en su celda de color pleno, como un cartel. */
+    Cuadricula,
+
+    /** Números redondos gordos, la hora arriba y los minutos abajo. */
+    Flotante,
+
+    /** El color de los dígitos sigue la hora del día: alba, día, atardecer, noche. */
+    Solar,
+
     /** Analógico minimalista: agujas y marcas, sin números. */
     Analogico,
 
     /** Flip clock: cada dígito gira como el cartel de un aeropuerto viejo. */
     Flip,
+
+    /** La hora de acá y la de dos o tres ciudades elegidas. */
+    Mundial,
 
     /** Carrusel de fotos de Immich con la hora chica en una esquina. */
     Fotos;

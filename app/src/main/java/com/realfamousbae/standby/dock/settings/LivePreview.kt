@@ -18,6 +18,10 @@ import com.realfamousbae.standby.dock.core.prefs.StandbySettings
 import com.realfamousbae.standby.dock.faces.AnalogFace
 import com.realfamousbae.standby.dock.faces.DigitalFace
 import com.realfamousbae.standby.dock.faces.FlipFace
+import com.realfamousbae.standby.dock.faces.FloatingFace
+import com.realfamousbae.standby.dock.faces.GridFace
+import com.realfamousbae.standby.dock.faces.SolarFace
+import com.realfamousbae.standby.dock.faces.WorldFace
 import com.realfamousbae.standby.dock.faces.PhotosFace
 import com.realfamousbae.standby.dock.graph
 import com.realfamousbae.standby.dock.standby.StandbyColors
@@ -49,8 +53,23 @@ fun LivePreview(settings: StandbySettings, modifier: Modifier = Modifier) {
                 dateSize = 16.sp,
                 modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
             )
+            ClockFace.Cuadricula -> GridFace(style, Modifier.fillMaxSize().padding(10.dp))
+            ClockFace.Flotante -> FloatingFace(style, Modifier.fillMaxSize().padding(horizontal = 16.dp))
+            ClockFace.Solar -> SolarFace(
+                style = style,
+                maxTimeSize = 110.sp,
+                dateSize = 14.sp,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
+            )
             ClockFace.Analogico -> AnalogFace(style, Modifier.fillMaxSize().padding(10.dp))
             ClockFace.Flip -> FlipFace(style, Modifier.fillMaxSize().padding(10.dp))
+            ClockFace.Mundial -> WorldFace(
+                settings = settings,
+                style = style,
+                maxTimeSize = 56.sp,
+                cityTimeSize = 22.sp,
+                modifier = Modifier.fillMaxSize().padding(vertical = 12.dp),
+            )
             ClockFace.Fotos -> PhotosFace(settings, style, context.graph.immich, Modifier.fillMaxSize())
         }
     }

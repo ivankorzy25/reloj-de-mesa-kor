@@ -10,6 +10,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import com.realfamousbae.standby.dock.core.prefs.ClockFace
 import com.realfamousbae.standby.dock.core.prefs.StandbySettings
 import com.realfamousbae.standby.dock.photos.ImmichClient
@@ -51,8 +53,24 @@ fun ClockFaceHost(
                 dateSize = dateSize,
                 modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             )
+            ClockFace.Cuadricula -> GridFace(style, Modifier.fillMaxSize().padding(16.dp))
+            ClockFace.Flotante -> FloatingFace(style, Modifier.fillMaxSize().padding(horizontal = 24.dp))
+            ClockFace.Solar -> SolarFace(
+                style = style,
+                maxTimeSize = maxTimeSize,
+                dateSize = dateSize,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+            )
             ClockFace.Analogico -> AnalogFace(style, Modifier.fillMaxSize().padding(16.dp))
             ClockFace.Flip -> FlipFace(style, Modifier.fillMaxSize().padding(16.dp))
+            ClockFace.Mundial -> WorldFace(
+                settings = settings,
+                style = style,
+                // La hora de acá deja lugar abajo para las ciudades.
+                maxTimeSize = 0.5f * maxTimeSize,
+                cityTimeSize = maxOf(maxTimeSize.value * 0.14f, 20f).sp,
+                modifier = Modifier.fillMaxSize(),
+            )
             ClockFace.Fotos -> PhotosFace(settings, style, immich, Modifier.fillMaxSize())
         }
     }

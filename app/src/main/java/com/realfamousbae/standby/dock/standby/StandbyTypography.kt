@@ -1,6 +1,10 @@
 package com.realfamousbae.standby.dock.standby
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +49,14 @@ object StandbyFonts {
     /** Dígitos de un solo ancho: la hora no "salta" al cambiar de minuto. */
     const val TABULAR_NUMBERS = "tnum"
 }
+
+/**
+ * Un tamaño pensado en pantalla (dp) llevado a sp. Las caras que miden el espacio que tienen
+ * y de ahí sacan el cuerpo de la letra no pueden usar sp directo: el ajuste "tamaño de letra"
+ * del sistema (en el S25 de Iván está en 1,15) agrandaría los números hasta que no entran.
+ */
+@Composable
+fun dpAsSp(dp: Float): TextUnit = (dp / LocalDensity.current.fontScale).sp
 
 /** Paleta del modo: grises apagados sobre negro puro (OLED) y la versión de noche en rojo. */
 object StandbyColors {

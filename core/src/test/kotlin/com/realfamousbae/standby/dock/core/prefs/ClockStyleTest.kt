@@ -9,7 +9,8 @@ class ClockStyleTest {
     @Test
     fun `el orden de las caras es el del carrusel`() {
         assertEquals(ClockFace.Digital, ClockFace.byIndex(0))
-        assertEquals(ClockFace.Fotos, ClockFace.byIndex(3))
+        // Las fotos van siempre al final del carrusel.
+        assertEquals(ClockFace.Fotos, ClockFace.byIndex(ClockFace.entries.size - 1))
         // Índice fuera de rango (cara sacada en una versión futura): la de siempre.
         assertEquals(ClockFace.Digital, ClockFace.byIndex(99))
     }
@@ -17,6 +18,8 @@ class ClockStyleTest {
     @Test
     fun `valores guardados que no se entienden caen en el de por defecto`() {
         assertEquals(ClockFace.Flip, ClockFace.parse("Flip"))
+        assertEquals(ClockFace.Mundial, ClockFace.parse("Mundial"))
+        assertEquals(ClockFace.Cuadricula, ClockFace.parse("Cuadricula"))
         assertEquals(ClockFace.Digital, ClockFace.parse("Otra"))
         assertEquals(ClockFont.CondensadaFina, ClockFont.parse(null))
         assertEquals(HourFormat.Sistema, HourFormat.parse("nada"))
