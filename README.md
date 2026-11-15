@@ -18,6 +18,36 @@
 
 Probado en Samsung Galaxy S25 Ultra (One UI). Anda en cualquier Android 12 o más nuevo.
 
+## 📸 Así se ve
+
+| Digital | Analógico | Flip clock |
+|---|---|---|
+| ![](docs/img/01-digital.webp) | ![](docs/img/02-Analogico.webp) | ![](docs/img/02-Flip.webp) |
+
+**Con tarjeta al costado** — clima, agenda, alarma y batería, lo que está sonando:
+
+| Clima | Alarma y batería | Reproduciendo |
+|---|---|---|
+| ![](docs/img/06-tarjeta-Clima.webp) | ![](docs/img/06-tarjeta-AlarmaBateria.webp) | ![](docs/img/06-tarjeta-Musica.webp) |
+
+**Colores y tipografías** a gusto:
+
+| Ámbar | Celeste | Lila |
+|---|---|---|
+| ![](docs/img/03-color-AMBAR.webp) | ![](docs/img/03-color-CELESTE.webp) | ![](docs/img/03-color-LILA.webp) |
+
+| Redonda gruesa | Geométrica | Monoespaciada |
+|---|---|---|
+| ![](docs/img/04-fuente-Redonda.webp) | ![](docs/img/04-fuente-Geometrica.webp) | ![](docs/img/04-fuente-Mono.webp) |
+
+**Modo noche**, rojo tenue para no encandilar:
+
+| Digital | Con tarjeta |
+|---|---|
+| ![](docs/img/07-noche-digital.webp) | ![](docs/img/07-noche-tarjeta.webp) |
+
+Todas las variantes están en [`docs/capturas`](docs/capturas) a resolución completa.
+
 ## Qué hace
 
 - **Aparece solo.** Se apagó la pantalla y el teléfono está apoyado sobre el lado largo:
@@ -90,7 +120,11 @@ adb push immich.txt /sdcard/Android/data/ar.kor.reloj/files/immich.txt
 ```bash
 adb shell am broadcast -a com.realfamousbae.standby.dock.SHOW_NOW -p ar.kor.reloj
 adb shell am broadcast -a com.realfamousbae.standby.dock.HIDE_NOW -p ar.kor.reloj
+# fijar la configuración desde adb (para demos y capturas):
+adb shell am broadcast -a com.realfamousbae.standby.dock.DEMO -p ar.kor.reloj \
+  --es face Flip --es layout ClockAndWidget --es card Clima --es color FFE8B059 --es font Redonda --es night 0
 ```
+Extras aceptados: `face` (Digital, Analogico, Flip, Fotos), `card` (Clima, Calendario, AlarmaBateria, Musica, Widget), `layout` (ClockOnly, ClockAndWidget), `color` (ARGB hex), `font` (CondensadaFina, Redonda, Geometrica, Mono), `size`, `seconds`, `hour` (Sistema, H24, H12), `night`, `nightsensor`, `nightstart`, `nightend` (minutos).
 
 Está protegido con el permiso DUMP, que solo tienen adb y el sistema.
 
