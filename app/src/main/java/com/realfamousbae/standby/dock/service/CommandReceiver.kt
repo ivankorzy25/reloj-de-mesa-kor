@@ -15,6 +15,7 @@ import com.realfamousbae.standby.dock.core.prefs.ClockFont
 import com.realfamousbae.standby.dock.core.prefs.HourFormat
 import com.realfamousbae.standby.dock.core.prefs.ScreenLayout
 import com.realfamousbae.standby.dock.core.prefs.SideCard
+import com.realfamousbae.standby.dock.core.prefs.WorldCities
 import com.realfamousbae.standby.dock.prefs.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,6 +79,12 @@ class CommandReceiver : BroadcastReceiver() {
                             pending.resultData = buildString {
                                 append("en vivo: $vivo\n")
                                 append("lugar: ${lugar.label} [${lugar.key}] guardado=$guardado\n")
+                                val s = graph.settings.value
+                                append(
+                                    "puesto: cara=${s.clockFace} layout=${s.layout} " +
+                                        "tarjetas=${s.sideCard}/${s.sideCard2} noche=${s.nightEnabled} " +
+                                        "atenuar=${s.dimEnabled}/${s.dimAfterMinutes}min\n",
+                                )
                                 append(graph.diagLog.lines().takeLast(20).joinToString("\n"))
                             }
                         }
@@ -114,6 +121,13 @@ class CommandReceiver : BroadcastReceiver() {
         intent.getStringExtra("places")?.let { repo.setPlaceMemory(it.isOn()) }
         intent.getStringExtra("dim")?.let { repo.setDimEnabled(it.isOn()) }
         intent.getStringExtra("dimminutes")?.toIntOrNull()?.let { repo.setDimAfterMinutes(it) }
+        // --es cities "Madrid,Tokio,Miami": los nombres tal cual salen en Ajustes.
+        intent.getStringExtra("cities")?.let { texto ->
+            val elegidas = texto.split(",").mapNotNull { nombre ->
+                WorldCities.catalog.firstOrNull { it.name.equals(nombre.trim(), ignoreCase = true) }
+            }
+            if (elegidas.isNotEmpty()) repo.setWorldCities(elegidas)
+        }
     }
 
     /** Dejar lo que fijó el DEMO como "lo que había quedado" en este lugar. */

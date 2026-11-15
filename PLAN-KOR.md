@@ -132,3 +132,98 @@ Orden sugerido. Cada ítem: compilar, instalar en el S25 por adb, commit, y anot
 6. **Siempre encendido con atenuación**: en vez de apagar la pantalla, bajar a mínimo brillo con reloj chico tras N minutos, y volver al tocar; cuidar batería (solo cargando).
 7. El comando adb DEMO debe poder fijar también las caras/layouts nuevos (para capturas y video).
 Reglas: todo en español rioplatense, sin romper lo que anda, sin secretos en el repo, README y galería actualizados al terminar.
+
+---
+
+# HECHO — Fase 2, 15/11/2026 (Claude Code, sesión de la tarde)
+
+Los siete ítems están hechos, compilados, firmados, instalados en el S25 y commiteados uno
+por uno: `7e75b83`, `dbabab6`, `cbf257f`, `76dfc3a`, `f8c611b`, `ad6dca5` y el de las
+capturas. Todo probado en el teléfono salvo lo que se aclara abajo.
+
+## 1. Dos columnas de tarjetas · `7e75b83`
+- Layout nuevo **"Dos columnas"**: dos columnas de tarjetas apiladas, cada una con su propio
+  swipe vertical y su elección guardada.
+- El **reloj pasó a ser una tarjeta más**, así la hora puede ir en una columna (si no, el
+  reloj de mesa se quedaba sin hora).
+- Tarjeta nueva **"Próxima alarma"**: la hora bien grande, el día y cuánto falta.
+- El widget del sistema solo se dibuja en la primera columna: Android no deja tener dos
+  vistas del mismo widget.
+
+## 2. Cuatro caras nuevas · `dbabab6`
+- **Cuadrícula** (cada dígito en su celda de color pleno), **Flotante** (hora arriba, minutos
+  abajo, redonda gorda), **Solar** (el color de los números sigue la hora del día) y
+  **Reloj mundial** (la hora de acá más hasta tres ciudades, con "mañana"/"ayer").
+- Las ciudades se eligen en Ajustes cuando la cara puesta es la mundial.
+- Se arregló algo que venía de antes: las caras que sacan el tamaño de la letra del espacio
+  que tienen usaban `sp`, y el ajuste "tamaño de letra" del sistema (1,15 en el S25) las
+  agrandaba hasta que no entraban. Ahora pasan de dp a sp con `dpAsSp`.
+- También se arregló el `DEMO` por adb: usaba `runBlocking` en el hilo principal y con el
+  proceso recién arrancado se trababa 60 s con la primera lectura de DataStore ("la app no
+  responde"). Ahora va con `goAsync`.
+
+## 3. Actividades en vivo a pantalla completa · `cbf257f`
+- **Llamada**: el nombre grande y los botones redondos de atender y colgar, sacados de las
+  intenciones del CallStyle de la notificación.
+- **Temporizador y cronómetro** con sus botones de verdad. El reloj de Samsung **no** prende
+  la bandera de cronómetro de Android: mete un `Chronometer` adentro de las vistas de la
+  notificación, así que si la bandera no está se arman las vistas y se busca el reloj adentro.
+  Probado con el temporizador del S25: contó bien y el botón "Cancelar" canceló de verdad.
+- **Música**: carátula grande, título y anterior/play/siguiente.
+- Un toque que se quedó un botón ya no cierra el modo.
+- Al conectarse el oyente se miran las notificaciones que ya estaban (si el teléfono se
+  reinició en medio de una llamada, eso sigue pasando).
+
+## 4. Memoria por cargador · `76dfc3a`
+- El lugar se reconoce por **cómo está cargando** (inalámbrico, pared, USB, sin cargador) y
+  por los **voltios de carga**, que delatan al cargador. Hasta ocho lugares.
+- Al aparecer en un lugar conocido vuelve la cara y las tarjetas de la última vez; al
+  cambiarlas, se anotan ahí. En Ajustes se ve en qué lugar estás y se pueden olvidar todos.
+- **No se pide el permiso de ubicación**, aunque el plan hablaba del nombre de la red wifi:
+  desde Android 10 leer el SSID exige ubicación, y una app de reloj que pide ubicación
+  asusta, más todavía para pasársela a un amigo. El cargador alcanza para lo que Iván quería
+  distinguir (mesa de luz contra escritorio).
+
+## 5. Fotos · `f8c611b`
+- **Ken Burns**: cada foto entra un poco acercada y durante sus 20 s se acerca y se corre
+  despacio; el lado al que se corre sale del id de la foto. De noche se queda quieta.
+- **Recuerdos**: las fotos del mismo día de los últimos doce años, con el cartel "Recuerdos
+  de un 15 de noviembre". Si ese día nunca pasó nada, sigue con fotos al azar.
+- **Solo las favoritas** ahora también vale para los recuerdos.
+- Probado contra el Immich de Iván: las fotos se mueven y los recuerdos del 15 de noviembre
+  salieron.
+
+## 6. Siempre encendido con atenuación · `ad6dca5`
+- A los N minutos sin tocar nada (1 a 30, de fábrica 5) y **solo en el cargador**, la pantalla
+  baja al brillo mínimo y queda la hora chiquita. Un toque la vuelve a encender y no cierra
+  el modo.
+- El reloj chiquito se corre de lugar cada minuto siguiendo vueltas de 7 y 5: tarda 35
+  minutos en repetir el mismo punto, para no quemar el OLED.
+- A batería no se atenúa: la pantalla se apaga como siempre.
+- La pantalla atenuada se probó forzándola por adb (`--es dimnow 1`), porque mientras se
+  probaba el teléfono estaba fuera del cargador. La regla de "solo cargando" es justamente la
+  que impidió probarla sola, y está cubierta por los tests de `:core`.
+
+## 7. El DEMO por adb llega a todo lo nuevo · (commit de capturas)
+- `face` acepta las ocho caras, `layout` acepta `Widgets`, y se suman `card2`, `cities`,
+  `live`, `dim`, `dimminutes`, `dimnow`, `memories`, `favorites`, `charging`, `places` y `on`.
+- `--es dump 1` devuelve el registro de diagnóstico y qué está puesto ahora, como resultado
+  del broadcast: en los Samsung, `logcat` no muestra lo que escriben las apps de uno, así que
+  era la única forma de mirar el registro sin tocar el teléfono.
+- Lo que fija el DEMO también queda anotado como "lo de este lugar", para que la memoria por
+  cargador no pise una captura recién armada.
+
+## Pendientes / para mirar
+- **Se sacó del repositorio la captura de la agenda** (`06-tarjeta-Calendario`): mostraba un
+  turno personal de Iván ("Limpieza dental…") y el repositorio es público. Si ya se publicó
+  alguna vez, conviene saber que estuvo ahí; en la galería nueva no hay ninguna captura con
+  datos personales ni fotos de Immich.
+- La cara de fotos sigue necesitando la clave de Immich; sin ella queda el cartel de siempre.
+- La música a pantalla completa se probó con la actividad de mentira del DEMO: no se puso
+  música de verdad en el teléfono de Iván para no hacerle sonar nada. Usa la misma fuente que
+  la tarjeta "Reproduciendo", que sí anda.
+- `README.en.md` sigue siendo el del autor original (habla de una app en ruso, del S24 y de
+  funciones que ya no son estas). El README en español está al día; el inglés habría que
+  rehacerlo entero o sacarlo.
+- "Recordatorios" (del ítem 1) quedó como "Próxima alarma": Android no tiene una lista de
+  recordatorios que una app pueda leer, solo alarmas y calendario, y las dos ya están.

@@ -20,15 +20,33 @@ Probado en Samsung Galaxy S25 Ultra (One UI). Anda en cualquier Android 12 o má
 
 ## 📸 Así se ve
 
-| Digital | Analógico | Flip clock |
+**Ocho caras de reloj**, que se pasan con el dedo:
+
+| Digital | Cuadrícula | Flotante | Solar |
+|---|---|---|---|
+| ![](docs/img/01-digital.webp) | ![](docs/img/10-cara-Cuadricula.webp) | ![](docs/img/10-cara-Flotante.webp) | ![](docs/img/10-cara-Solar.webp) |
+
+| Analógico | Flip clock | Reloj mundial |
 |---|---|---|
-| ![](docs/img/01-digital.webp) | ![](docs/img/02-Analogico.webp) | ![](docs/img/02-Flip.webp) |
+| ![](docs/img/02-Analogico.webp) | ![](docs/img/02-Flip.webp) | ![](docs/img/10-cara-Mundial.webp) |
 
 **Con tarjeta al costado** — clima, agenda, alarma y batería, lo que está sonando:
 
 | Clima | Alarma y batería | Reproduciendo |
 |---|---|---|
 | ![](docs/img/06-tarjeta-Clima.webp) | ![](docs/img/06-tarjeta-AlarmaBateria.webp) | ![](docs/img/06-tarjeta-Musica.webp) |
+
+**Dos columnas de tarjetas**, cada una con su propio dedo:
+
+| Reloj + clima | Clima + batería |
+|---|---|
+| ![](docs/img/09-dos-columnas.webp) | ![](docs/img/09-dos-columnas-bateria.webp) |
+
+**Lo que está pasando ahora**, a toda la pantalla, y la pantalla atenuada de la madrugada:
+
+| Llamada entrante | Temporizador | Siempre encendido |
+|---|---|---|
+| ![](docs/img/11-live-llamada.webp) | ![](docs/img/11-live-timer.webp) | ![](docs/img/13-siempre-encendido.webp) |
 
 **Colores y tipografías** a gusto:
 
@@ -53,17 +71,35 @@ Todas las variantes están en [`docs/capturas`](docs/capturas) a resolución com
 - **Aparece solo.** Se apagó la pantalla y el teléfono está apoyado sobre el lado largo:
   el reloj se pone por encima del bloqueo. Acostado boca arriba, o mientras lo estás usando,
   no aparece.
-- **Cuatro caras de reloj**, que se pasan con el dedo de izquierda a derecha y se recuerdan:
+- **Ocho caras de reloj**, que se pasan con el dedo de izquierda a derecha y se recuerdan:
   - **Digital**, con tipografía condensada fina a todo el ancho y dígitos de un solo ancho.
+  - **Cuadrícula**: cada dígito en su celda de color pleno, para ver la hora de lejos.
+  - **Flotante**: la hora arriba y los minutos abajo, en redonda bien gorda.
+  - **Solar**: los números se pintan con el color del momento del día (madrugada, amanecer,
+    mediodía, tarde, atardecer, anochecer).
   - **Analógica** minimalista, sin números.
   - **Flip clock**, con el giro de ficha de los carteles viejos.
-  - **Fotos**: carrusel de tu Immich, con la hora en una esquina.
-- **Tarjeta al costado**, que se pasa con el dedo de arriba a abajo:
+  - **Reloj mundial**: la hora de acá y la de hasta tres ciudades, con el aviso de si allá ya
+    es mañana.
+  - **Fotos**: carrusel de tu Immich con la hora en una esquina, con movimiento suave de
+    cámara y, si querés, solo las fotos del mismo día de otros años ("recuerdos").
+- **Tarjetas al costado**, que se pasan con el dedo de arriba a abajo. Podés tener una sola al
+  lado del reloj, o **dos columnas de tarjetas** con el reloj como una tarjeta más:
   - **Clima** de [Open-Meteo](https://open-meteo.com) (sin clave ni cuenta), del lugar que elijas.
   - **Agenda**: los próximos eventos del calendario del teléfono.
   - **Alarma y batería**: la próxima alarma del sistema y cuánta carga queda.
+  - **Próxima alarma** bien grande, con el día y cuánto falta.
   - **Reproduciendo**: carátula, título y play/pausa de lo que esté sonando.
   - **Widget del sistema**: cualquier widget de escritorio, con los bordes desvanecidos.
+- **Lo que está pasando, a toda la pantalla.** Si te llaman, el nombre ocupa toda la pantalla
+  con los botones de atender y colgar; si tenés un temporizador corriendo, se ve la cuenta
+  atrás con sus botones; si hay música, la carátula grande con los controles. Se puede apagar.
+- **Siempre encendido.** Después de unos minutos sin tocar nada, y solo si está cargando, la
+  pantalla baja al mínimo y queda la hora chiquita, que se corre de lugar para no quemar el
+  OLED. Un toque la vuelve a encender (y no cierra el reloj).
+- **Se acuerda de cada lugar.** La mesa de luz y el escritorio casi nunca tienen el mismo
+  cargador: el reloj reconoce en cuál está y vuelve a poner la cara y las tarjetas que habían
+  quedado ahí. Sin pedir ubicación ni ningún permiso nuevo.
 - **Avisos estilo iPhone.** Las notificaciones nuevas aparecen arriba en una burbuja grande,
   se van solas a los 8 segundos, se tocan para abrir la app y se deslizan para arriba para
   sacarlas. Se elige de qué apps se muestran, y el texto se tapa con las mismas reglas que
@@ -124,9 +160,34 @@ adb shell am broadcast -a com.realfamousbae.standby.dock.HIDE_NOW -p ar.kor.relo
 adb shell am broadcast -a com.realfamousbae.standby.dock.DEMO -p ar.kor.reloj \
   --es face Flip --es layout ClockAndWidget --es card Clima --es color FFE8B059 --es font Redonda --es night 0
 ```
-Extras aceptados: `face` (Digital, Analogico, Flip, Fotos), `card` (Clima, Calendario, AlarmaBateria, Musica, Widget), `layout` (ClockOnly, ClockAndWidget), `color` (ARGB hex), `font` (CondensadaFina, Redonda, Geometrica, Mono), `size`, `seconds`, `hour` (Sistema, H24, H12), `night`, `nightsensor`, `nightstart`, `nightend` (minutos).
+
+Extras aceptados:
+
+| Qué | Valores |
+|---|---|
+| `face` | Digital, Cuadricula, Flotante, Solar, Analogico, Flip, Mundial, Fotos |
+| `layout` | ClockOnly, ClockAndWidget, Widgets |
+| `card`, `card2` | Reloj, Clima, Calendario, AlarmaBateria, AlarmaGrande, Musica, Widget |
+| `cities` | nombres separados por coma: `"Madrid,Miami,Tokio"` |
+| `color` | ARGB en hexa, por ejemplo `FFE8B059` |
+| `font` | CondensadaFina, Redonda, Geometrica, Mono |
+| `size`, `seconds`, `hour` | tamaño en %, 0/1, y Sistema / H24 / H12 |
+| `night`, `nightsensor`, `nightstart`, `nightend` | 0/1 y minutos desde las 00:00 |
+| `live` | llamada, timer, musica, off — arma una actividad en vivo de mentira para las fotos |
+| `dim`, `dimminutes`, `dimnow` | el "siempre encendido": prenderlo, a los cuántos minutos, y forzarlo ya |
+| `memories`, `favorites` | las fotos: recuerdos del mismo día, y solo las favoritas |
+| `charging`, `places` | pedir cargador para aparecer, y la memoria por lugar |
+| `on` | 1 o 0: prender o apagar el reloj (sirve después de un "forzar detención") |
+| `dump` | devuelve el registro de diagnóstico como resultado del broadcast |
 
 Está protegido con el permiso DUMP, que solo tienen adb y el sistema.
+
+En los Samsung, `logcat` no muestra lo que escriben las apps de uno; por eso el `dump` del
+comando contesta por el propio broadcast:
+
+```bash
+adb shell am broadcast -a com.realfamousbae.standby.dock.DEMO -p ar.kor.reloj --es dump 1
+```
 
 ## Cómo está armado
 
