@@ -1,13 +1,22 @@
 # Reloj de Mesa KOR
 
-Modo mesa de luz para Android, al estilo del StandBy del iPhone. Dejás el teléfono cargando
-y acostado de costado, se apaga la pantalla y en vez del bloqueo aparece un reloj grande.
-Cuando lo levantás, desaparece solo.
+[![Descargar APK](https://img.shields.io/github/v/release/ivankorzy25/reloj-de-mesa-kor?label=Descargar%20APK&style=for-the-badge&color=orange)](https://github.com/ivankorzy25/reloj-de-mesa-kor/releases/latest/download/RelojDeMesaKOR.apk)
+[![Descargas](https://img.shields.io/github/downloads/ivankorzy25/reloj-de-mesa-kor/total?style=for-the-badge)](https://github.com/ivankorzy25/reloj-de-mesa-kor/releases)
+![Android 12+](https://img.shields.io/badge/Android-12%2B-3ddc84?style=for-the-badge&logo=android&logoColor=white)
+![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue?style=for-the-badge)
 
-Es un fork en español de [android-custom-always-on](https://github.com/realfamousbae/android-custom-always-on)
-(MIT), con las mejoras que pidió Iván (ver `PLAN-KOR.md`).
+**El StandBy del iPhone, en tu Android.** Dejás el teléfono cargando acostado de costado y aparece un reloj grande sobre la pantalla de bloqueo. Lo levantás y desaparece solo. Gratis, sin publicidad, sin cuentas.
 
-Probado en un Samsung Galaxy S25 Ultra (Android 17, One UI 9). Necesita Android 12 o más nuevo.
+[🇬🇧 English](README.en.md)
+
+## 📲 Descargar e instalar (sin saber nada)
+
+1. Desde el teléfono, bajá **[RelojDeMesaKOR.apk](https://github.com/ivankorzy25/reloj-de-mesa-kor/releases/latest/download/RelojDeMesaKOR.apk)**.
+2. Tocá el archivo descargado. Si Android pregunta, permití *instalar apps desconocidas* para el navegador (es un APK fuera de Google Play; el código es abierto y está acá).
+3. Abrí la app: la guía de la primera vez te lleva de la mano por los permisos, un paso por pantalla.
+4. Enchufalo y acostalo de costado. Listo.
+
+Probado en Samsung Galaxy S25 Ultra (One UI). Anda en cualquier Android 12 o más nuevo.
 
 ## Qué hace
 
@@ -39,7 +48,7 @@ Probado en un Samsung Galaxy S25 Ultra (Android 17, One UI 9). Necesita Android 
 - **Guía de la primera vez** en criollo, un paso por pantalla, para dejarlo andando sin saber
   nada de Android.
 
-## Instalar
+## Compilarlo vos mismo
 
 El APK firmado se arma con Gradle y se instala a mano (no está en Google Play):
 
@@ -103,3 +112,9 @@ MIT, igual que el proyecto original (ver `LICENSE`). Las tipografías que vienen
 SIL OFL 1.1 (ver `licenses/`).
 
 El plan de trabajo original del autor está en `docs/PLAN.md`, en ruso.
+
+## Créditos y licencia
+
+Fork de [android-custom-always-on](https://github.com/realfamousbae/android-custom-always-on) de realfamousbae, licencia MIT. Traducción, rediseño y nuevas funciones por [Korzy](https://github.com/ivankorzy25) — [KOR Generadores](https://generadores.ar), Quilmes, Argentina.
+
+Si te sirvió, dejá una ⭐ y compartilo.

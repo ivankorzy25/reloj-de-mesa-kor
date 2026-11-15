@@ -3,7 +3,7 @@
 Base: fork de realfamousbae/android-custom-always-on (Kotlin + Compose, MIT), ya traducido al español y compilando en PRO.
 Build: `cd ~/android-build/aon && ./gradlew --no-daemon -q assembleRelease` (SDK en ~/android-sdk, local.properties ya está).
 Firmar: zipalign + apksigner con ~/android-build/kor-release.keystore → standby-es.apk.
-Instalar: `adb -s 100.110.69.113:5555 install -r standby-es.apk` (S25 Ultra de Iván, pkg com.realfamousbae.standby.dock).
+Instalar: `adb install -r standby-es.apk`.
 Objetivo de Iván: "todo lo que tiene el StandBy de iPhone, tal cual, de base en esta app". Sin publicidad, sin cuentas, sin internet salvo clima/Immich.
 Uso real: cargador magnético que lo deja a ~45°, pantalla apagada → aparece solo. Umbral de inclinación alto.
 
@@ -106,7 +106,7 @@ por una. Siete commits, del `fd3b31f` al `c351cc4`.
   manifiestos y nombres de las pruebas. README nuevo contando lo que hace la app.
 - Los APK ya no se versionan en git (se generan con `./gradlew assembleRelease`).
 
-## Cómo quedó el teléfono (S25 Ultra, 100.110.69.113:5555)
+## Cómo quedó el teléfono
 - Instalado **Reloj de Mesa KOR** (`ar.kor.reloj`) con todos los permisos dados por adb
   (sobre otras apps, batería, notificaciones, acceso a notificaciones, No molestar y
   calendario) y la clave de Immich ya cargada.
