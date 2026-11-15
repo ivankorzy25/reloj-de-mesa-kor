@@ -25,6 +25,8 @@ class BrightnessController(
     private val settings: StateFlow<StandbySettings>,
     /** De noche la pantalla no pasa de este brillo, aunque el sensor pida más. */
     private val night: StateFlow<Boolean>,
+    /** Atenuada ("siempre encendido"): el brillo más bajo, pase lo que pase. */
+    private val dimmed: StateFlow<Boolean>,
 ) {
     private val auto = AutoBrightness()
 
@@ -40,10 +42,14 @@ class BrightnessController(
         launch { lightSensor.lux().collect { _lux.value = it } }
             // El sensor se queda callado mientras la luz no cambia: por eso ajustamos por reloj.
         while (true) {
-            _lux.value?.let { lux ->
-                val s = settings.value
-                val max = if (night.value) minOf(s.brightnessMax, NIGHT_MAX_BRIGHTNESS) else s.brightnessMax
-                auto.update(lux, SystemClock.elapsedRealtime(), s.brightnessMin, max)?.let(::apply)
+            if (dimmed.value) {
+                apply(settings.value.brightnessMin)
+            } else {
+                _lux.value?.let { lux ->
+                    val s = settings.value
+                    val max = if (night.value) minOf(s.brightnessMax, NIGHT_MAX_BRIGHTNESS) else s.brightnessMax
+                    auto.update(lux, SystemClock.elapsedRealtime(), s.brightnessMin, max)?.let(::apply)
+                }
             }
             delay(TICK_MS)
         }

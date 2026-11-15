@@ -46,6 +46,9 @@ class StandbyActivity : ComponentActivity() {
     /** Modo noche prendido: lo decide la pantalla y lo usa el control de brillo. */
     private val nightActive = MutableStateFlow(false)
 
+    /** Pantalla atenuada ("siempre encendido"): también lo decide la pantalla. */
+    private val dimmed = MutableStateFlow(false)
+
     /** El lugar donde está apoyado ahora (lo da el cargador); null hasta que se sabe. */
     private var placeKey: String? = null
 
@@ -65,6 +68,7 @@ class StandbyActivity : ComponentActivity() {
             lightSensor = LightSensor(getSystemService(SensorManager::class.java)),
             settings = graph.settings,
             night = nightActive,
+            dimmed = dimmed,
         )
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) { brightness.run() }
@@ -101,6 +105,7 @@ class StandbyActivity : ComponentActivity() {
             LaunchedEffect(night) { nightActive.value = night }
             val style = rememberClockStyle(settings, night = night)
             val live by graph.liveActivities.current.collectAsStateWithLifecycle()
+            val forceDim by graph.demoDim.collectAsStateWithLifecycle()
             StandbyScreen(
                 settings = settings,
                 style = style,
@@ -111,6 +116,8 @@ class StandbyActivity : ComponentActivity() {
                 nowPlaying = graph.nowPlaying,
                 banners = graph.notificationBus.banners,
                 live = live,
+                forceDim = forceDim,
+                onDimChange = { dimmed.value = it },
                 onOpenNotification = ::openNotification,
                 onFaceChange = { face ->
                     if (face != graph.settings.value.clockFace) {

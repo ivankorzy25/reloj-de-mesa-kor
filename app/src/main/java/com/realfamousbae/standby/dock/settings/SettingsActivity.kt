@@ -176,6 +176,8 @@ private fun SettingsScreen(onPickWidget: (AppWidgetProviderInfo) -> Unit, onOpen
         SectionDivider()
         LiveSection()
         SectionDivider()
+        DimSection()
+        SectionDivider()
         NightSection()
         SectionDivider()
         NotificationsSection()

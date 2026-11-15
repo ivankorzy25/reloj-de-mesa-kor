@@ -59,6 +59,12 @@ data class StandbySettings(
     /** Ciudades de la cara "Reloj mundial" (hasta [WorldCities.MAX]). */
     val worldCities: List<WorldCity> = WorldCities.defaults,
 
+    // --- Siempre encendido con atenuación ---
+    /** En vez de apagarse, bajar al mínimo y dejar un reloj chiquito (solo cargando). */
+    val dimEnabled: Boolean = true,
+    /** Minutos sin tocar nada antes de atenuar. */
+    val dimAfterMinutes: Int = 5,
+
     // --- Memoria por cargador ---
     /** Acordarse de la cara y las tarjetas de cada lugar (mesa de luz, escritorio…). */
     val placeMemoryEnabled: Boolean = true,

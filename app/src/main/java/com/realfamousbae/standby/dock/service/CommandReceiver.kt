@@ -59,6 +59,7 @@ class CommandReceiver : BroadcastReceiver() {
                         // queda apagado a propósito, y así se lo vuelve a prender sin tocar el
                         // teléfono).
                         intent.getStringExtra("on")?.let { graph.runState.setEnabled(it.isOn(), "adb") }
+                        intent.getStringExtra("dimnow")?.let { graph.demoDim.value = it.isOn() }
                         intent.getStringExtra("live")?.let {
                             graph.liveActivities.setDemo(demoActivity(context, it))
                         }
@@ -111,6 +112,8 @@ class CommandReceiver : BroadcastReceiver() {
         intent.getStringExtra("memories")?.let { repo.setImmichMemories(it.isOn()) }
         intent.getStringExtra("favorites")?.let { repo.setImmichOnlyFavorites(it.isOn()) }
         intent.getStringExtra("places")?.let { repo.setPlaceMemory(it.isOn()) }
+        intent.getStringExtra("dim")?.let { repo.setDimEnabled(it.isOn()) }
+        intent.getStringExtra("dimminutes")?.toIntOrNull()?.let { repo.setDimAfterMinutes(it) }
     }
 
     /** Dejar lo que fijó el DEMO como "lo que había quedado" en este lugar. */

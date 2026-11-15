@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.realfamousbae.standby.dock.cards.SideCardHost
+import android.os.SystemClock
+import com.realfamousbae.standby.dock.core.dim.DimPolicy
 import com.realfamousbae.standby.dock.core.prefs.ClockFace
 import com.realfamousbae.standby.dock.core.prefs.SideCard
 import com.realfamousbae.standby.dock.core.prefs.ScreenLayout
@@ -101,6 +105,8 @@ fun StandbyScreen(
     nowPlaying: NowPlayingSource,
     banners: Flow<BannerNotification>,
     live: LiveActivity?,
+    forceDim: Boolean,
+    onDimChange: (Boolean) -> Unit,
     onOpenNotification: (BannerNotification) -> Unit,
     onFaceChange: (ClockFace) -> Unit,
     onCardChange: (SideCard) -> Unit,
@@ -117,13 +123,50 @@ fun StandbyScreen(
         source = nowPlaying,
     )
     val liveNow = if (settings.liveActivitiesEnabled) live ?: music else null
+
+    // Siempre encendido: a los N minutos sin tocar nada, y solo cargando, la pantalla baja al
+    // mínimo y queda un reloj chiquito. Cualquier toque la vuelve a encender.
+    val charging = rememberCharging(LocalContext.current)
+    var lastTouch by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
+    var dimmed by remember { mutableStateOf(false) }
+    LaunchedEffect(settings.dimEnabled, settings.dimAfterMinutes, charging, liveNow != null, lastTouch, forceDim) {
+        dimmed = forceDim
+        if (forceDim) return@LaunchedEffect
+        while (true) {
+            val idle = SystemClock.elapsedRealtime() - lastTouch
+            if (DimPolicy.shouldDim(
+                    enabled = settings.dimEnabled,
+                    charging = charging,
+                    liveActivity = liveNow != null,
+                    idleMs = idle,
+                    afterMinutes = settings.dimAfterMinutes,
+                )
+            ) {
+                dimmed = true
+                return@LaunchedEffect
+            }
+            delay(10_000L)
+        }
+    }
+    LaunchedEffect(dimmed) { onDimChange(dimmed) }
+
     Box(
         Modifier
             .fillMaxSize()
             .background(StandbyColors.background)
-            .exitOnTap(onExit),
+            // Cualquier toque, aunque sea el principio de un arrastre, despierta la pantalla.
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    lastTouch = SystemClock.elapsedRealtime()
+                }
+            }
+            // Atenuada, el toque solo despierta: cerrar el modo sin querer sería lo peor.
+            .exitOnTap { if (!dimmed) onExit() },
     ) {
-        if (liveNow != null) {
+        if (dimmed) {
+            DimScreen(style, Modifier.fillMaxSize())
+        } else if (liveNow != null) {
             LiveActivityScreen(
                 activity = liveNow,
                 style = style,

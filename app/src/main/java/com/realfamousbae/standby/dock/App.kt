@@ -19,6 +19,7 @@ import com.realfamousbae.standby.dock.widgets.StandbyWidgetHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -58,6 +59,9 @@ class AppGraph(app: Application) {
     val widgetHost = StandbyWidgetHost(app)
     val notificationBus = NotificationBus()
     val liveActivities = LiveActivityBus(appScope)
+
+    /** Atenuación forzada por adb, para las capturas y el video. No se guarda. */
+    val demoDim = MutableStateFlow(false)
     val quietMode = QuietMode(app, diagLog)
     val immich = ImmichClient(diagLog)
     val weather = WeatherRepository(diagLog)
