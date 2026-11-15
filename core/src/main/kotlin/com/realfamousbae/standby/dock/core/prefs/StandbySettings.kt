@@ -82,6 +82,8 @@ data class StandbySettings(
     val immichUrl: String = "https://fotos.generadores.ar",
     val immichApiKey: String = "",
     val immichOnlyFavorites: Boolean = false,
+    /** Mostrar las fotos del mismo día de otros años en vez de fotos al azar. */
+    val immichMemories: Boolean = false,
 
     /** Ya pasó por el asistente de permisos de la primera vez. */
     val onboardingDone: Boolean = false,

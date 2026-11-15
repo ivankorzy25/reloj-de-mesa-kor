@@ -74,6 +74,7 @@ class SettingsRepository(context: Context) {
                 immichUrl = p[IMMICH_URL] ?: defaults.immichUrl,
                 immichApiKey = p[IMMICH_KEY] ?: defaults.immichApiKey,
                 immichOnlyFavorites = p[IMMICH_FAVORITES] ?: defaults.immichOnlyFavorites,
+                immichMemories = p[IMMICH_MEMORIES] ?: defaults.immichMemories,
                 onboardingDone = p[ONBOARDING_DONE] ?: defaults.onboardingDone,
             )
         }
@@ -147,6 +148,7 @@ class SettingsRepository(context: Context) {
     }
 
     suspend fun setImmichOnlyFavorites(value: Boolean) = set(IMMICH_FAVORITES, value)
+    suspend fun setImmichMemories(value: Boolean) = set(IMMICH_MEMORIES, value)
     suspend fun setOnboardingDone(value: Boolean) = set(ONBOARDING_DONE, value)
 
     suspend fun setWidgetId(value: Int?) {
@@ -202,6 +204,7 @@ class SettingsRepository(context: Context) {
         val IMMICH_URL = stringPreferencesKey("immich_url")
         val IMMICH_KEY = stringPreferencesKey("immich_api_key")
         val IMMICH_FAVORITES = booleanPreferencesKey("immich_only_favorites")
+        val IMMICH_MEMORIES = booleanPreferencesKey("immich_memories")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
     }
 }

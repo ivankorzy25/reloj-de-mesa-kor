@@ -10,11 +10,19 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.net.HttpURLConnection
+import java.time.LocalDate
 import java.net.URL
 
 /** Solo nos interesa el id de cada foto; el resto de la respuesta de Immich se ignora. */
 @Serializable
 private data class ImmichAsset(val id: String)
+
+/** La búsqueda por fecha contesta envuelta: `{"assets":{"items":[…]}}`. */
+@Serializable
+private data class SearchResponse(val assets: SearchBucket = SearchBucket())
+
+@Serializable
+private data class SearchBucket(val items: List<ImmichAsset> = emptyList())
 
 /**
  * Cliente mínimo de Immich (fotos.generadores.ar): pide ids al azar y baja la vista previa
@@ -40,6 +48,37 @@ class ImmichClient(private val log: DiagLog) {
                 .onFailure { log.log("Fotos: respuesta de Immich que no se entiende") }
                 .getOrDefault(emptyList())
         } ?: emptyList()
+    }
+
+    /**
+     * "Recuerdos": las fotos del mismo día de los años anteriores, de la más vieja a la más
+     * nueva. Se pregunta año por año porque Immich busca en un rango de fechas por vez.
+     * Si no hay nada (ese día nunca pasó nada), devuelve una lista vacía y el carrusel sigue
+     * con fotos al azar.
+     */
+    suspend fun memoryIds(
+        settings: StandbySettings,
+        today: LocalDate,
+        yearsBack: Int = YEARS_BACK,
+        perYear: Int = 10,
+    ): List<String> {
+        if (!settings.immichReady) return emptyList()
+        val ids = mutableListOf<String>()
+        for (back in yearsBack downTo 1) {
+            val day = runCatching { today.minusYears(back.toLong()) }.getOrNull() ?: continue
+            val body = buildString {
+                append("""{"size":$perYear,"type":"IMAGE","withArchived":false""")
+                append(""","takenAfter":"${day}T00:00:00.000Z"""")
+                append(""","takenBefore":"${day.plusDays(1)}T00:00:00.000Z"""")
+                if (settings.immichOnlyFavorites) append(""","isFavorite":true""")
+                append("}")
+            }
+            val text = request(settings, "/api/search/metadata", body) ?: continue
+            runCatching { json.decodeFromString<SearchResponse>(text).assets.items.map { it.id } }
+                .onSuccess { ids += it }
+                .onFailure { log.log("Fotos: respuesta de recuerdos que no se entiende") }
+        }
+        return ids
     }
 
     /** Vista previa (~1920 px de lado largo), lista para dibujar. */
@@ -101,5 +140,8 @@ class ImmichClient(private val log: DiagLog) {
 
     private companion object {
         const val TIMEOUT_MS = 15_000
+
+        /** Hasta cuántos años para atrás se buscan recuerdos del día de hoy. */
+        const val YEARS_BACK = 12
     }
 }

@@ -107,6 +107,10 @@ class CommandReceiver : BroadcastReceiver() {
         intent.getStringExtra("nightsensor")?.let { repo.setNightUseLightSensor(it.isOn()) }
         intent.getStringExtra("nightstart")?.toIntOrNull()?.let { repo.setNightStart(it) }
         intent.getStringExtra("nightend")?.toIntOrNull()?.let { repo.setNightEnd(it) }
+        intent.getStringExtra("charging")?.let { repo.setRequireCharging(it.isOn()) }
+        intent.getStringExtra("memories")?.let { repo.setImmichMemories(it.isOn()) }
+        intent.getStringExtra("favorites")?.let { repo.setImmichOnlyFavorites(it.isOn()) }
+        intent.getStringExtra("places")?.let { repo.setPlaceMemory(it.isOn()) }
     }
 
     /** Dejar lo que fijó el DEMO como "lo que había quedado" en este lugar. */

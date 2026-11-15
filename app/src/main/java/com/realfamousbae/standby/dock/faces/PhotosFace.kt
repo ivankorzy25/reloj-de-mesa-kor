@@ -1,6 +1,8 @@
 package com.realfamousbae.standby.dock.faces
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,9 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -32,6 +36,7 @@ import com.realfamousbae.standby.dock.standby.ClockStyle
 import com.realfamousbae.standby.dock.standby.StandbyFonts
 import com.realfamousbae.standby.dock.standby.rememberNow
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /** Cada cuánto cambia la foto. */
@@ -42,8 +47,12 @@ private const val BATCH = 40
 
 /**
  * Carrusel de fotos de Immich con la hora chica abajo a la izquierda. Las fotos se bajan de
- * a una y se cambian cada 20 s con un fundido; si no hay clave o no hay red, queda la hora
- * sobre negro y un cartelito explicando qué falta.
+ * a una, se cambian cada 20 s con un fundido y se mueven despacito (efecto Ken Burns: en vez
+ * de quedarse quietas, se van acercando y corriendo, que es lo que hace que una foto fija no
+ * parezca un cartel). Si no hay clave o no hay red, queda la hora sobre negro y un cartelito
+ * explicando qué falta.
+ *
+ * Con "recuerdos" prendido, en vez de fotos al azar salen las del mismo día de otros años.
  */
 @Composable
 fun PhotosFace(
@@ -54,8 +63,14 @@ fun PhotosFace(
 ) {
     var photo by remember { mutableStateOf<ImageBitmap?>(null) }
     var problem by remember { mutableStateOf<String?>(null) }
+    var memories by remember { mutableStateOf(false) }
 
-    LaunchedEffect(settings.immichUrl, settings.immichApiKey, settings.immichOnlyFavorites) {
+    LaunchedEffect(
+        settings.immichUrl,
+        settings.immichApiKey,
+        settings.immichOnlyFavorites,
+        settings.immichMemories,
+    ) {
         if (!settings.immichReady) {
             problem = "Para ver tus fotos, pegá la clave de Immich en Ajustes."
             return@LaunchedEffect
@@ -63,7 +78,14 @@ fun PhotosFace(
         val pending = ArrayDeque<String>()
         while (true) {
             if (pending.isEmpty()) {
-                pending.addAll(client.randomIds(settings, BATCH))
+                // Los recuerdos se piden primero; si ese día nunca pasó nada, se sigue al azar.
+                val recuerdos = if (settings.immichMemories) {
+                    client.memoryIds(settings, LocalDate.now())
+                } else {
+                    emptyList()
+                }
+                memories = recuerdos.isNotEmpty()
+                pending.addAll(recuerdos.ifEmpty { client.randomIds(settings, BATCH) })
                 if (pending.isEmpty()) {
                     problem = "No se pudo hablar con Immich. Se reintenta en un rato."
                     delay(60_000L)
@@ -82,7 +104,7 @@ fun PhotosFace(
         }
     }
 
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier.fillMaxSize().clipToBounds(), contentAlignment = Alignment.Center) {
         val current = photo
         // Crossfade: la foto nueva aparece mientras la vieja se va, sin parpadeo a negro.
         Crossfade(targetState = current, animationSpec = tween(900), label = "foto") { shown ->
@@ -90,7 +112,8 @@ fun PhotosFace(
                 Image(
                     bitmap = shown,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    // De noche la foto se queda quieta: a oscuras, algo que se mueve molesta.
+                    modifier = Modifier.fillMaxSize().kenBurns(enabled = !style.night, key = shown),
                     contentScale = ContentScale.Crop,
                 )
             }
@@ -128,6 +151,17 @@ fun PhotosFace(
                 ),
                 maxLines = 1,
             )
+            if (memories && current != null) {
+                BasicText(
+                    "Recuerdos de un ${now.format(DateTimeFormatter.ofPattern("d 'de' MMMM"))}",
+                    style = TextStyle(
+                        color = Color(0xCCF2F2F2),
+                        fontFamily = StandbyFonts.text,
+                        fontSize = 17.sp,
+                    ),
+                    maxLines = 1,
+                )
+            }
             problem?.let {
                 BasicText(
                     it,
@@ -140,5 +174,31 @@ fun PhotosFace(
                 )
             }
         }
+    }
+}
+
+/**
+ * Ken Burns: la foto arranca un poco acercada y, durante los 20 s que está en pantalla, se
+ * acerca un poquito más y se corre despacio para un costado. El lado al que se corre sale
+ * del propio id de la foto, así cada una se mueve distinto sin que haga falta sortearlo.
+ */
+@Composable
+private fun Modifier.kenBurns(enabled: Boolean, key: Any): Modifier {
+    if (!enabled) return this
+    val avance = remember(key) { Animatable(0f) }
+    LaunchedEffect(key) {
+        avance.snapTo(0f)
+        avance.animateTo(1f, tween(durationMillis = (PHOTO_MS + 1_500L).toInt(), easing = LinearEasing))
+    }
+    val rumbo = remember(key) { key.hashCode() }
+    val haciaX = if (rumbo and 1 == 0) 1f else -1f
+    val haciaY = if (rumbo and 2 == 0) 1f else -1f
+    return graphicsLayer {
+        val escala = 1.06f + 0.08f * avance.value
+        scaleX = escala
+        scaleY = escala
+        // El corrimiento va dentro de lo que sobra al agrandar, así nunca se ve un borde.
+        translationX = haciaX * avance.value * size.width * 0.03f
+        translationY = haciaY * avance.value * size.height * 0.02f
     }
 }

@@ -224,6 +224,12 @@ private fun ImmichDialog(onDismiss: () -> Unit) {
                     title = "Solo las favoritas",
                     checked = settings.immichOnlyFavorites,
                 ) { on -> scope.launch { graph.settingsRepository.setImmichOnlyFavorites(on) } }
+                SwitchRow(
+                    title = "Recuerdos",
+                    subtitle = "Las fotos del mismo día de otros años. Si ese día no hay nada, " +
+                        "salen fotos al azar.",
+                    checked = settings.immichMemories,
+                ) { on -> scope.launch { graph.settingsRepository.setImmichMemories(on) } }
                 result?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 OutlinedButton(
                     onClick = {
